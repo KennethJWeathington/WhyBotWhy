@@ -1,0 +1,23 @@
+{
+  "name": "whybotwhy",
+  "version": "0.0.1",
+  "description": "A twitch chat bot for the channel whytroywhy",
+  "main": "bot.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/js/bot.js",
+    "genmeta": "node src/scripts/gen_metadata.js"
+  },
+  "author": "Jake Weathington",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "lodash": "^4.17.15",
+    "mongoose": "^5.9.7",
+    "tmi.js": "^1.5.0"
+  },
+  "devDependencies": {
+    "eslint": "^6.8.0"
+  }
+}
