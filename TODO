@@ -33,7 +33,7 @@ Commands:
     Programmatically spit out list of commands
     Make a seperate one for mod commands, come up with a way to determine mod commands
   ☐ Auto sub thank
-  ☐ Boopboard
+  ✔ Boopboard @done(20-04-15 19:33)
   !boopleaderboard would output like(:)
   Top Boopers(:)
   1. Fanfloh 65 boops
@@ -72,7 +72,7 @@ Basics:
   ☐ Switch to async
   ✔ Add metadata script @done(20-04-12 01:38)
     Find a way to parameretize the create so it can be one big metadata script maybe?
-  ☐ put on github
+  ✔ put on github @done(20-04-15 18:43)
     for .env -->
     If your configuration file is called foobar.config, then you would commit a file called foobar.config.example to the repository,
     containing sample data. To run your program, you would create a local (not tracked) file called foobar.config with your real password data.
@@ -95,3 +95,5 @@ Improvements:
     https://www.npmjs.com/package/@madelsberger/pausebuffer
   ☐ Maybe Parameterize and db-drive cooldown on commands?
   ☐ Interface with Streamlabs
+  ☐ Add score comparison in order to determing when to optimally sort scoreboards
+  ☐ Parameterize scoreboard size (i.e. top x places shown) and scoreboard message to refactor all scoreboards into single function

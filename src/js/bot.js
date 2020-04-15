@@ -101,7 +101,14 @@ const commandMap = {
     setCounter(channel, tags, arr, 'boops', 0);
   },
   '!boopboard' : function(channel, tags, msg, arr) {
-    
+    let scoreboardMessage = 'Top Boopers:'
+
+    for (let i = 0; i < chatElements.boops.scoreboard.length && i < 3; i++) {
+      const score = chatElements.boops.scoreboard[i];
+      scoreboardMessage = scoreboardMessage + ` ${i + 1}. @${score.user}: ${score.count} boops,`;
+    }
+
+    client.say(channel, _.trimEnd(scoreboardMessage,','));
   }
 }
 
@@ -131,6 +138,8 @@ function incrementBoopCounter(channel, tags, msg, arr) {
     let user = chatElements.boops.scoreboard.find(x => x.userName = tags.username);
     if (user) user.count = user.count + 1;
     else chatElements.boops.scoreboard.push({ user: tags.username, count: 1 });
+
+    chatElements.boops.scoreboard = chatElements.boops.scoreboard.sort((a,b) => b.count - a.count);
 
     chatElements.boops.save(function (err) {
       if (err) handleError(err);
