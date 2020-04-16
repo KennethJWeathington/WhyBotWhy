@@ -25,7 +25,7 @@ Commands:
     Make sure to sanitize commands
     Make sure to validate, ie check if command with that name already exists, check that a mod is the one creating it, etc
   ☐ alter simple text commands
-  ☐ remove simple text commands
+  ✔ remove simple text commands @done(20-04-16 14:21)
   ☐ !followage
     Heres a good hint https://community.nightdev.com/t/how-to-do-a-followage-command/8996
   ☐ Add more features to !dice
@@ -99,3 +99,6 @@ Improvements:
   ☐ Interface with Streamlabs
   ☐ Add score comparison in order to determing when to optimally sort scoreboards
   ☐ Parameterize scoreboard size (i.e. top x places shown) and scoreboard message to refactor all scoreboards into single function
+  ☐ Factor out document deletion once another document needs deleting
+  ☐ Factor out counter increment with pre and post save functions
+  ☐ Move all of the functions in the command map to their own functions

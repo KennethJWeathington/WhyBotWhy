@@ -116,12 +116,23 @@ const commandMap = {
       else {
         createDocument(channel, `Command !${arr[1]}`, chatElements.simpleTextCommands, SimpleTextCommandModel,
           { command: arr[1], text: msg.slice(arr[0].length + arr[1].length + 2) },
-          function (result) {
-            commandMap['!' + result.command] = function (channel, tags, msg, arr) {
-              client.say(channel, result.text);
-            }
-          });
+          function (result) { addSimpleTextCommandToMap(result.command, result.text); });
       }
+    }
+  },
+  '!removecommand': function (channel, tags, msg, arr) {
+    if (isModerator(tags.badges) && arr.length > 1) {
+      const removedCommands = _.remove(chatElements.simpleTextCommands, x => x.command === arr[1]);
+
+      if (removedCommands.length > 0) {
+        removedCommands.forEach(element => {
+          delete commandMap['!' + arr[1]];
+          SimpleTextCommandModel.deleteOne({ command: arr[1] }, function (err) {
+            if (err) handleError(err);
+            else client.say(channel, `Command !${arr[1]} deleted.`);
+          })
+        });
+      } else { client.say(channel, 'Command not found.'); }
     }
   }
 }
@@ -130,16 +141,12 @@ SimpleTextCommandModel.find(function(err, result) {
   loadChatElementCallback(err, result, 'simpleTextCommands');
   if(chatElements.simpleTextCommands){
     chatElements.simpleTextCommands.forEach(element => {
-      commandMap['!' + element.command] = function (channel, tags, msg, arr) {
-        client.say(channel, element.text);
-      }
+      addSimpleTextCommandToMap(element.command, element.text);
     });
   } else {
     chatElements.simpleTextCommands = [];
   }
 });
-
-
 
 //#endregion Chat interaction
 
@@ -173,22 +180,6 @@ function incrementBoopCounter(channel, tags, msg, arr) {
     chatElements.boops.save(function (err) {
       if (err) handleError(err);
       client.say(channel, `@${tags.username} booped the snoot! The snoot has been booped ${chatElements.boops.count} times.`);
-    })
-  }
-}
-
-function setCounter(channel, tags, arr, counterName, count = NaN) {
-  if(chatElements[counterName] && isModerator(tags.badges)) {
-    let num = 0;
-    if(count) num = count;
-    else if (arr.length > 1) num = _.toInteger(arr[1]);
-
-    if(!_.isInteger(num)) num = 0;
-    chatElements[counterName].count = num;
-
-    chatElements[counterName].save(function(err) {
-      if(err) handleError(err);
-      client.say(channel, `${_.upperFirst(counterName)} set to ${num}.`);
     })
   }
 }
@@ -268,6 +259,28 @@ function createCooldownFunction(thisArg, func, timeout) {
         onCooldown = false;
       }, timeout);
     }
+  }
+}
+
+function setCounter(channel, tags, arr, counterName, count = NaN) {
+  if(chatElements[counterName] && isModerator(tags.badges)) {
+    let num = 0;
+    if(count) num = count;
+    else if (arr.length > 1) num = _.toInteger(arr[1]);
+
+    if(!_.isInteger(num)) num = 0;
+    chatElements[counterName].count = num;
+
+    chatElements[counterName].save(function(err) {
+      if(err) handleError(err);
+      client.say(channel, `${_.upperFirst(counterName)} set to ${num}.`);
+    })
+  }
+}
+
+function addSimpleTextCommandToMap(command, text) {
+  commandMap['!' + command] = function (channel, tags, msg, arr) {
+    client.say(channel, text);
   }
 }
 
