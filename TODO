@@ -102,3 +102,4 @@ Improvements:
   ☐ Factor out document deletion once another document needs deleting
   ☐ Factor out counter increment with pre and post save functions
   ☐ Move all of the functions in the command map to their own functions
+  ☐ Add README
