@@ -21,9 +21,11 @@ Commands:
     4. ~~~
     Descriptions are below stream for more information
     add a command that'll let you set how many minutes it repeats so you can adjust if necessary
-  ☐ Add/alter/remove simple text commands
+  ✔ Add simple text commands @done(20-04-16 09:42)
     Make sure to sanitize commands
     Make sure to validate, ie check if command with that name already exists, check that a mod is the one creating it, etc
+  ☐ alter simple text commands
+  ☐ remove simple text commands
   ☐ !followage
     Heres a good hint https://community.nightdev.com/t/how-to-do-a-followage-command/8996
   ☐ Add more features to !dice

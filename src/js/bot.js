@@ -17,6 +17,7 @@ db.on('error', console.error.bind(console, 'MongoDB connection error:'));
 
 const WhyQuoteModel = require('../models/whyquote');
 const CounterModel = require('../models/counter');
+const SimpleTextCommandModel = require('../models/simpletextcommand');
 
 //#endregion Mongoose
 
@@ -107,10 +108,38 @@ const commandMap = {
       const score = chatElements.boops.scoreboard[i];
       scoreboardMessage = scoreboardMessage + ` ${i + 1}. @${score.user}: ${score.count} boops,`;
     }
-
     client.say(channel, _.trimEnd(scoreboardMessage,','));
+  },
+  '!addcommand': function (channel, tags, msg, arr) {
+    if (isModerator(tags.badges) && arr.length > 2) {
+      if (commandMap[`!${arr[1]}`]) client.say(channel, 'Command already exists.');
+      else {
+        createDocument(channel, `Command !${arr[1]}`, chatElements.simpleTextCommands, SimpleTextCommandModel,
+          { command: arr[1], text: msg.slice(arr[0].length + arr[1].length + 2) },
+          function (result) {
+            commandMap['!' + result.command] = function (channel, tags, msg, arr) {
+              client.say(channel, result.text);
+            }
+          });
+      }
+    }
   }
 }
+
+SimpleTextCommandModel.find(function(err, result) {
+  loadChatElementCallback(err, result, 'simpleTextCommands');
+  if(chatElements.simpleTextCommands){
+    chatElements.simpleTextCommands.forEach(element => {
+      commandMap['!' + element.command] = function (channel, tags, msg, arr) {
+        client.say(channel, element.text);
+      }
+    });
+  } else {
+    chatElements.simpleTextCommands = [];
+  }
+});
+
+
 
 //#endregion Chat interaction
 
@@ -204,12 +233,13 @@ function loadChatElementCallback(err, result, propName) {
   }
 }
 
-function createDocument(channel, name, arr, model, createObj) {
+function createDocument(channel, name, arr, model, createObj, afterSaveFunc = null) {
   model.create(createObj, function (err, result) {
     if (err)
       handleError(`Error creating ${name}.`);
     else {
       arr.push(result);
+      if(afterSaveFunc) afterSaveFunc(result);
       client.say(channel, `${name} saved!`);
     }
   });
