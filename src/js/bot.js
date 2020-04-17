@@ -85,7 +85,8 @@ const commandMap = {
   '!boop': cooldownIncrementBoopCounter,
   '!boopboard': showBoopBoard,
   '!addcommand': addCommand,
-  '!removecommand': removeCommand
+  '!removecommand': removeCommand,
+  '!rules': showRules
 }
 
 SimpleTextCommandModel.find(function (err, result) {
@@ -177,6 +178,16 @@ function removeCommand(channel, tags, msg, arr) {
       });
     } else { client.say(channel, 'Command not found.'); }
   }
+}
+
+function showRules(channel, tags, msg, arr) {
+  client.say(channel,
+    `Please remember the channel rules:
+    1. Be kind
+    2. No politics or religion
+    3. No spam
+    4. Only backseat if I ask for it
+    Check below the stream for more information`)
 }
 
 //#endregion Command functions

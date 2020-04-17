@@ -99,7 +99,7 @@ Improvements:
   ☐ Interface with Streamlabs
   ☐ Add score comparison in order to determing when to optimally sort scoreboards
   ☐ Parameterize scoreboard size (i.e. top x places shown) and scoreboard message to refactor all scoreboards into single function
-  ☐ Factor out document deletion once another document needs deleting
-  ☐ Factor out counter increment with pre and post save functions
-  ☐ Move all of the functions in the command map to their own functions
+  ✔ Factor out document deletion once another document needs deleting @done(20-04-16 18:22)
+  ✔ Factor out counter increment with pre and post save functions @done(20-04-16 18:24)
+  ✔ Move all of the functions in the command map to their own functions @done(20-04-16 18:24)
   ☐ Add README
