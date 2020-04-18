@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 //#region Requires
 
 require('dotenv').config()
@@ -66,20 +65,14 @@ const cooldownIncrementDeathCounter = createCooldownFunction(this, incrementDeat
 const cooldownIncrementBoopCounter = createCooldownFunction(this, incrementBoopCounter, 10000);
 
 const commandMap = {
-  '!dice': function (channel, tags, msg, arr) {
-    const num = rollDice();
-    client.say(channel, `You rolled a ${num}!`);
-  },
-  '!whybot': function (channel, tags, msg, arr) {
-    client.say(channel, `Why Troy, why would you let me write a bot???`);
-  },
-  '!whyme': function (channel, tags, msg, arr) {
+  '!dice': rollDice,
+  '!whyme': function ({channel, tags}) {
     client.say(channel, `Why @${tags.username}, why???`);
   },
   '!addquote': addQuote,
   '!quote': getQuote,
   '!death': cooldownIncrementDeathCounter,
-  '!setdeaths': function (channel, tags, msg, arr) {
+  '!setdeaths': function ({channel, tags, arr}) {
     setCounter(channel, tags, arr, 'deaths');
   },
   '!boop': cooldownIncrementBoopCounter,
@@ -100,23 +93,31 @@ SimpleTextCommandModel.find(function (err, result) {
   }
 });
 
+const rulesIntervals = [];
+opts.channels.forEach(element => {
+  const rulesInterval = setInterval(showRules,1800000, element);
+  rulesIntervals.push(rulesInterval);  
+});
+
+
 //#endregion Chat interaction
 
 //#region Command functions
 
-function rollDice() {
+function rollDice({channel}) {
   const sides = 6;
-  return Math.floor(Math.random() * sides) + 1;
+  const num = Math.floor(Math.random() * sides) + 1;
+  client.say(channel, `You rolled a ${num}!`)
 }
 
-function addQuote(channel, tags, msg, arr) {
+function addQuote({channel, tags, msg, arr}) {
   const quote = msg.slice(arr[0].length + 1);
   if (quote && quote !== '') {
     createDocument(channel, 'Quote', chatElements.whyQuotes, WhyQuoteModel, { text: quote, user_added: tags.username });
   }
 }
 
-function getQuote(channel, tags, msg, arr) {
+function getQuote({channel}) {
   if (chatElements.whyQuotes.length > 0) {
     const quoteIndex = Math.floor(Math.random() * chatElements.whyQuotes.length);
     const quote = chatElements.whyQuotes[quoteIndex];
@@ -124,14 +125,14 @@ function getQuote(channel, tags, msg, arr) {
   }
 }
 
-function incrementDeathCounter(channel, tags, msg, arr) {
+function incrementDeathCounter({channel}) {
   if (chatElements.deaths) {
     chatElements.deaths.count++;
     updateDocument(channel, null, chatElements.deaths, null, null, `Troy has died embarrassingly ${chatElements.deaths.count} times on stream!`);
   }
 }
 
-function incrementBoopCounter(channel, tags, msg, arr) {
+function incrementBoopCounter({channel, tags}) {
   if (chatElements.boops) {
     chatElements.boops.count++;
 
@@ -145,7 +146,7 @@ function incrementBoopCounter(channel, tags, msg, arr) {
   }
 }
 
-function showBoopBoard(channel, tags, msg, arr) {
+function showBoopBoard({channel}) {
   let scoreboardMessage = 'Top Boopers:'
 
   for (let i = 0; i < chatElements.boops.scoreboard.length && i < 3; i++) {
@@ -155,7 +156,7 @@ function showBoopBoard(channel, tags, msg, arr) {
   client.say(channel, _.trimEnd(scoreboardMessage, ','));
 }
 
-function addCommand(channel, tags, msg, arr) {
+function addCommand({channel, tags, msg, arr}) {
   if (isModerator(tags.badges) && arr.length > 2) {
     if (commandMap[`!${arr[1]}`]) client.say(channel, 'Command already exists.');
     else {
@@ -166,28 +167,27 @@ function addCommand(channel, tags, msg, arr) {
   }
 }
 
-function removeCommand(channel, tags, msg, arr) {
+function removeCommand({channel, tags, arr}) {
   if (isModerator(tags.badges) && arr.length > 1) {
     const removedCommands = _.remove(chatElements.simpleTextCommands, x => x.command === arr[1]);
 
     if (removedCommands.length > 0) {
       removedCommands.forEach(element => {
-        const fullCommand = `!${arr[1]}`;
+        const fullCommand = `!${element.command}`;
         delete commandMap[fullCommand];
-        deleteDocument(channel, `Command ${fullCommand}`, SimpleTextCommandModel, { command: arr[1] });
+        deleteDocument(channel, `Command ${fullCommand}`, SimpleTextCommandModel, { command: element.command });
       });
     } else { client.say(channel, 'Command not found.'); }
   }
 }
 
-function showRules(channel, tags, msg, arr) {
+function showRules({channel}) {
   client.say(channel,
-    `Please remember the channel rules:
+    `Please remember the channel rules:    
     1. Be kind
     2. No politics or religion
     3. No spam
-    4. Only backseat if I ask for it
-    Check below the stream for more information`)
+    4. Only backseat if I ask for it`)
 }
 
 //#endregion Command functions
@@ -195,20 +195,14 @@ function showRules(channel, tags, msg, arr) {
 //#region Event Handlers
 
 function onMessageHandler(channel, tags, msg, self) {
-  if (self) { return; } // Ignore messages from the bot
+  if (self) { return; }
 
-  // Remove whitespace from chat message
   const trimmedMsg = msg.trim();
   const arr = trimmedMsg.split(' ');
   const commandName = _.toLower(arr[0]);
 
-  // If the command is known, let's execute it
   const command = commandMap[commandName];
-
-  if (command) {
-    command(channel, tags, trimmedMsg, arr);
-    console.log(`* Executed ${commandName} command`);
-  }
+  if (command) command({ channel, tags, msg: trimmedMsg, arr });
 }
 
 function onConnectedHandler(addr, port) {
@@ -298,7 +292,7 @@ function setCounter(channel, tags, arr, counterName, count = NaN) {
 }
 
 function addSimpleTextCommandToMap(command, text) {
-  commandMap['!' + command] = function (channel, tags, msg, arr) {
+  commandMap['!' + command] = function ({channel}) {
     client.say(channel, text);
   }
 }

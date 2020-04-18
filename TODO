@@ -13,7 +13,7 @@ Commands:
     Make a cooldown https://stackoverflow.com/questions/41746916/cooldown-for-commands-using-node-tmi-js might help
   ✔ "Why" quotes @done(20-04-11 17:41)
     Make sure to capture who added it and when
-  ☐ Behavior/rules on a timer
+  ✔ Behavior/rules on a timer @done(20-04-17 09:29)
     Please remember the channel rules(:)
     1. Be Kind
     2. ~
@@ -41,6 +41,8 @@ Commands:
   1. Fanfloh 65 boops
   2. Sayainking 49 boops
   3. PsychoticPAL 25 boops
+  ☐ Commands to manipulate metadata
+  ☐ Command to reload data
 
 Basics:
   ✘ pong reply @cancelled(20-04-11 13:13)
@@ -66,12 +68,12 @@ Basics:
     https://discuss.dev.twitch.tv/t/hosting-platform-for-a-bot/9838/9
     https://www.openshift.com/
     Heroku, glitch
+  ☐ Continous integration
   ☐ set up programmatic oauth
-    To authenticate your chatbot in a production setting, we recommend you register your app (chatbot) and use the OAuth Authorization code flow. 
-    This enables you to authenticate programmatically. To learn more, read the Apps & Authentication Guide.
-    https://dev.twitch.tv/docs/authentication/#registration
-    https://dev.twitch.tv/docs/authentication
-  ☐ Switch to async
+  To authenticate your chatbot in a production setting, we recommend you register your app (chatbot) and use the OAuth Authorization code flow. 
+  This enables you to authenticate programmatically. To learn more, read the Apps & Authentication Guide.
+  https://dev.twitch.tv/docs/authentication/#registration
+  https://dev.twitch.tv/docs/authentication
   ✔ Add metadata script @done(20-04-12 01:38)
     Find a way to parameretize the create so it can be one big metadata script maybe?
   ✔ put on github @done(20-04-15 18:43)
@@ -95,11 +97,15 @@ Improvements:
   ☐ Add 'done' message at end of data load using async and only connect to chat once everything is loaded
   ☐ Look into pausebuffer if I don't want to roll my own spam control
     https://www.npmjs.com/package/@madelsberger/pausebuffer
-  ☐ Maybe Parameterize and db-drive cooldown on commands?
   ☐ Interface with Streamlabs
   ☐ Add score comparison in order to determing when to optimally sort scoreboards
-  ☐ Parameterize scoreboard size (i.e. top x places shown) and scoreboard message to refactor all scoreboards into single function
   ✔ Factor out document deletion once another document needs deleting @done(20-04-16 18:22)
   ✔ Factor out counter increment with pre and post save functions @done(20-04-16 18:24)
   ✔ Move all of the functions in the command map to their own functions @done(20-04-16 18:24)
   ☐ Add README
+  ✔ Maybe refactor all of the ugly command params with deconstructors? @done(20-04-18 01:25)
+  ☐ Look at refactoring with arrow functions
+  ☐ Refactor initial load of data
+  ☐ DB-drive hard-coded values
+  ☐ Make commands objects so more verbose things can be printed with !command
+  ☐ Maybe just make setcounter take a param trackScoreboard instead of a function so increcmentcounter can be refactored
