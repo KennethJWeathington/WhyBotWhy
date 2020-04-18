@@ -51,30 +51,19 @@ client.connect();
 //#region Chat interaction
 
 const chatElements = {};
-WhyQuoteModel.find(function (err, result) {
-  loadChatElementCallback(err, result, 'whyQuotes');
-});
-CounterModel.findOne({ name: 'deaths' }, function (err, result) {
-  loadChatElementCallback(err, result, 'deaths');
-});
-CounterModel.findOne({ name: 'boops' }, function (err, result) {
-  loadChatElementCallback(err, result, 'boops');
-});
+WhyQuoteModel.find((err, result) => loadChatElementCallback(err, result, 'whyQuotes', []));
+CounterModel.findOne({ name: 'deaths' }, (err, result) => loadChatElementCallback(err, result, 'deaths'));
+CounterModel.findOne({ name: 'boops' }, (err, result) => loadChatElementCallback(err, result, 'boops'));
 
 const cooldownIncrementDeathCounter = createCooldownFunction(this, incrementDeathCounter, 10000);
 const cooldownIncrementBoopCounter = createCooldownFunction(this, incrementBoopCounter, 10000);
 
 const commandMap = {
-  '!dice': rollDice,
-  '!whyme': function ({channel, tags}) {
-    client.say(channel, `Why @${tags.username}, why???`);
-  },
+  '!whyme': ({channel, tags}) => client.say(channel, `Why @${tags.username}, why???`),
   '!addquote': addQuote,
   '!quote': getQuote,
   '!death': cooldownIncrementDeathCounter,
-  '!setdeaths': function ({channel, tags, arr}) {
-    setCounter(channel, tags, arr, 'deaths');
-  },
+  '!setdeaths': ({channel, tags, arr}) => setCounter(channel, tags, arr, 'deaths'),
   '!boop': cooldownIncrementBoopCounter,
   '!boopboard': showBoopBoard,
   '!addcommand': addCommand,
@@ -82,37 +71,21 @@ const commandMap = {
   '!rules': showRules
 }
 
-SimpleTextCommandModel.find(function (err, result) {
-  loadChatElementCallback(err, result, 'simpleTextCommands');
-  if (chatElements.simpleTextCommands) {
-    chatElements.simpleTextCommands.forEach(element => {
-      addSimpleTextCommandToMap(element.command, element.text);
-    });
-  } else {
-    chatElements.simpleTextCommands = [];
-  }
+SimpleTextCommandModel.find((err, result) => {
+  loadChatElementCallback(err, result, 'simpleTextCommands', []);
+  chatElements.simpleTextCommands.forEach(element => addSimpleTextCommandToMap(element.command, element.text));
 });
 
 const rulesIntervals = [];
-opts.channels.forEach(element => {
-  const rulesInterval = setInterval(showRules,1800000, element);
-  rulesIntervals.push(rulesInterval);  
-});
-
+opts.channels.forEach(element => rulesIntervals.push(setInterval(showRules,1800000, element)));
 
 //#endregion Chat interaction
 
 //#region Command functions
 
-function rollDice({channel}) {
-  const sides = 6;
-  const num = Math.floor(Math.random() * sides) + 1;
-  client.say(channel, `You rolled a ${num}!`)
-}
-
 function addQuote({channel, tags, msg, arr}) {
   const quote = msg.slice(arr[0].length + 1);
-  if (quote && quote !== '') {
+  if (quote !== '') {
     createDocument(channel, 'Quote', chatElements.whyQuotes, WhyQuoteModel, { text: quote, user_added: tags.username });
   }
 }
@@ -162,7 +135,7 @@ function addCommand({channel, tags, msg, arr}) {
     else {
       createDocument(channel, `Command !${arr[1]}`, chatElements.simpleTextCommands, SimpleTextCommandModel,
         { command: arr[1], text: msg.slice(arr[0].length + arr[1].length + 2) },
-        function (result) { addSimpleTextCommandToMap(result.command, result.text); });
+        (result) => addSimpleTextCommandToMap(result.command, result.text));
     }
   }
 }
@@ -213,7 +186,7 @@ function onConnectedHandler(addr, port) {
 
 //#region Helper Functions
 
-function loadChatElementCallback(err, result, propName) {
+function loadChatElementCallback(err, result, propName, defaultValue = null) {
   const err_msg = `Error loading ${propName}.`;
   const succ_msg = `Successfully loaded ${propName}!`;
 
@@ -221,13 +194,12 @@ function loadChatElementCallback(err, result, propName) {
   else if (result) {
     chatElements[propName] = result;
     console.log(succ_msg);
-  }
+  } else chatElements[propName] = defaultValue;
 }
 
 function createDocument(channel, name, arr, model, createObj, afterSaveFunc = null) {
-  model.create(createObj, function (err, result) {
-    if (err)
-      handleError(`Error creating ${name}.`);
+  model.create(createObj, (err, result) => {
+    if (err) handleError(`Error creating ${name}.`);
     else {
       arr.push(result);
       if (afterSaveFunc) afterSaveFunc(result);
@@ -237,7 +209,7 @@ function createDocument(channel, name, arr, model, createObj, afterSaveFunc = nu
 }
 
 function deleteDocument(channel, name, model, searchObj) {
-  model.deleteOne(searchObj, function (err) {
+  model.deleteOne(searchObj, (err) => {
     if (err) handleError(err);
     else client.say(channel, `${name} deleted.`);
   })
@@ -247,7 +219,7 @@ function updateDocument(channel, name, obj, prop, newVal, msg) {
   if (prop) obj[prop] = newVal;
   if (!msg) msg = `${name} updated.`;
 
-  obj.save(function (err) {
+  obj.save((err) => {
     if (err) handleError(err);
     client.say(channel, msg);
   })
@@ -268,13 +240,11 @@ function isModerator(badges) {
 function createCooldownFunction(thisArg, func, timeout) {
   let onCooldown = false;
 
-  return function (...arr) {
+  return (...arr) => {
     if (!onCooldown) {
       func.apply(thisArg, arr);
       onCooldown = true;
-      setTimeout(function () {
-        onCooldown = false;
-      }, timeout);
+      setTimeout(() => onCooldown = false, timeout);
     }
   }
 }
@@ -284,17 +254,13 @@ function setCounter(channel, tags, arr, counterName, count = NaN) {
     let num = 0;
     if (count) num = count;
     else if (arr.length > 1) num = _.toInteger(arr[1]);
-
     if (!_.isInteger(num)) num = 0;
-
     updateDocument(channel, null, chatElements[counterName], 'count', num, `${_.upperFirst(counterName)} set to ${num}.`)
   }
 }
 
 function addSimpleTextCommandToMap(command, text) {
-  commandMap['!' + command] = function ({channel}) {
-    client.say(channel, text);
-  }
+  commandMap['!' + command] = ({channel}) => client.say(channel, text);
 }
 
 //#endregion Helper Functions

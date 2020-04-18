@@ -28,7 +28,6 @@ Commands:
   ✔ remove simple text commands @done(20-04-16 14:21)
   ☐ !followage
     Heres a good hint https://community.nightdev.com/t/how-to-do-a-followage-command/8996
-  ☐ Add more features to !dice
   ☐ Add quote purge feature by user, only usable by mods
   ✔ Add reset death counter command, mods only @done(20-04-12 19:18)
   ☐ !commands
@@ -109,3 +108,4 @@ Improvements:
   ☐ DB-drive hard-coded values
   ☐ Make commands objects so more verbose things can be printed with !command
   ☐ Maybe just make setcounter take a param trackScoreboard instead of a function so increcmentcounter can be refactored
+  ☐ Come up with a better way of creating cooldown functions to allow for more flexibility in params
