@@ -30,7 +30,7 @@ Commands:
     Heres a good hint https://community.nightdev.com/t/how-to-do-a-followage-command/8996
   ☐ Add quote purge feature by user, only usable by mods
   ✔ Add reset death counter command, mods only @done(20-04-12 19:18)
-  ☐ !commands
+  ✔ !commands @done(20-04-19 21:06)
     Programmatically spit out list of commands
     Make a seperate one for mod commands, come up with a way to determine mod commands
   ☐ Auto sub thank
@@ -103,9 +103,10 @@ Improvements:
   ✔ Move all of the functions in the command map to their own functions @done(20-04-16 18:24)
   ☐ Add README
   ✔ Maybe refactor all of the ugly command params with deconstructors? @done(20-04-18 01:25)
-  ☐ Look at refactoring with arrow functions
-  ☐ Refactor initial load of data
+  ✔ Look at refactoring with arrow functions @done(20-04-18 17:42)
+  ☐ Promisify initial load of data
   ☐ DB-drive hard-coded values
   ☐ Make commands objects so more verbose things can be printed with !command
   ☐ Maybe just make setcounter take a param trackScoreboard instead of a function so increcmentcounter can be refactored
   ☐ Come up with a better way of creating cooldown functions to allow for more flexibility in params
+  ☐ Filter out mod commands from !commands

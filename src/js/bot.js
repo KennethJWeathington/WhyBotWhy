@@ -68,7 +68,8 @@ const commandMap = {
   '!boopboard': showBoopBoard,
   '!addcommand': addCommand,
   '!removecommand': removeCommand,
-  '!rules': showRules
+  '!rules': showRules,
+  '!commands': showCommands
 }
 
 SimpleTextCommandModel.find((err, result) => {
@@ -161,6 +162,14 @@ function showRules({channel}) {
     2. No politics or religion
     3. No spam
     4. Only backseat if I ask for it`)
+}
+
+function showCommands({channel}) {
+  let commandMsg = 'Commands: '
+
+  _.forIn(commandMap,(value, key) => commandMsg += `${key} `);
+
+  client.say(channel, _.trimEnd(commandMsg));
 }
 
 //#endregion Command functions
