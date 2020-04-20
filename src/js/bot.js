@@ -44,54 +44,45 @@ const client = new tmi.client(opts);
 client.on('message', onMessageHandler);
 client.on('connected', onConnectedHandler);
 
-client.connect();
-
 //#endregion tmi.js
 
 //#region Chat interaction
 
 const chatElements = {};
-WhyQuoteModel.find((err, result) => loadChatElementCallback(err, result, 'whyQuotes', []));
-CounterModel.findOne({ name: 'deaths' }, (err, result) => loadChatElementCallback(err, result, 'deaths'));
-CounterModel.findOne({ name: 'boops' }, (err, result) => loadChatElementCallback(err, result, 'boops'));
 
 const cooldownIncrementDeathCounter = createCooldownFunction(this, incrementDeathCounter, 10000);
 const cooldownIncrementBoopCounter = createCooldownFunction(this, incrementBoopCounter, 10000);
 
-const commandMap = {
-  '!whyme': ({channel, tags}) => client.say(channel, `Why @${tags.username}, why???`),
-  '!addquote': addQuote,
-  '!quote': getQuote,
-  '!death': cooldownIncrementDeathCounter,
-  '!setdeaths': ({channel, tags, arr}) => setCounter(channel, tags, arr, 'deaths'),
-  '!boop': cooldownIncrementBoopCounter,
-  '!boopboard': showBoopBoard,
-  '!addcommand': addCommand,
-  '!removecommand': removeCommand,
-  '!rules': showRules,
-  '!commands': showCommands
-}
+const commandMap = new Map();
+commandMap['!whyme'] = { command: ({ channel, tags }) => client.say(channel, `Why @${tags.username}, why???`), mod_required: false };
+commandMap['!addquote'] = { command: addQuote, mod_required: false };
+commandMap['!quote'] = { command: getQuote, mod_required: false };
+commandMap['!death'] = { command: cooldownIncrementDeathCounter, mod_required: false };
+commandMap['!setdeaths'] = { command: ({ channel, tags, arr }) => setCounter(channel, tags, arr, 'deaths'), mod_required: true };
+commandMap['!boop'] = { command: cooldownIncrementBoopCounter, mod_required: false };
+commandMap['!boopboard'] = { command: showBoopBoard, mod_required: false };
+commandMap['!addcommand'] = { command: addCommand, mod_required: true };
+commandMap['!removecommand'] = { command: removeCommand, mod_required: true };
+commandMap['!rules'] = { command: showRules, mod_required: false };
+commandMap['!commands'] = { command: showCommands, mod_required: false };
 
-SimpleTextCommandModel.find((err, result) => {
-  loadChatElementCallback(err, result, 'simpleTextCommands', []);
-  chatElements.simpleTextCommands.forEach(element => addSimpleTextCommandToMap(element.command, element.text));
-});
+setup();
 
 const rulesIntervals = [];
-opts.channels.forEach(element => rulesIntervals.push(setInterval(showRules,1800000, element)));
+opts.channels.forEach(channel => rulesIntervals.push(setInterval(showRules, 1800000, channel)));
 
 //#endregion Chat interaction
 
 //#region Command functions
 
-function addQuote({channel, tags, msg, arr}) {
+function addQuote({ channel, tags, msg, arr }) {
   const quote = msg.slice(arr[0].length + 1);
   if (quote !== '') {
     createDocument(channel, 'Quote', chatElements.whyQuotes, WhyQuoteModel, { text: quote, user_added: tags.username });
   }
 }
 
-function getQuote({channel}) {
+function getQuote({ channel }) {
   if (chatElements.whyQuotes.length > 0) {
     const quoteIndex = Math.floor(Math.random() * chatElements.whyQuotes.length);
     const quote = chatElements.whyQuotes[quoteIndex];
@@ -99,14 +90,14 @@ function getQuote({channel}) {
   }
 }
 
-function incrementDeathCounter({channel}) {
+function incrementDeathCounter({ channel }) {
   if (chatElements.deaths) {
     chatElements.deaths.count++;
     updateDocument(channel, null, chatElements.deaths, null, null, `Troy has died embarrassingly ${chatElements.deaths.count} times on stream!`);
   }
 }
 
-function incrementBoopCounter({channel, tags}) {
+function incrementBoopCounter({ channel, tags }) {
   if (chatElements.boops) {
     chatElements.boops.count++;
 
@@ -120,7 +111,7 @@ function incrementBoopCounter({channel, tags}) {
   }
 }
 
-function showBoopBoard({channel}) {
+function showBoopBoard({ channel }) {
   let scoreboardMessage = 'Top Boopers:'
 
   for (let i = 0; i < chatElements.boops.scoreboard.length && i < 3; i++) {
@@ -130,7 +121,7 @@ function showBoopBoard({channel}) {
   client.say(channel, _.trimEnd(scoreboardMessage, ','));
 }
 
-function addCommand({channel, tags, msg, arr}) {
+function addCommand({ channel, tags, msg, arr }) {
   if (isModerator(tags.badges) && arr.length > 2) {
     if (commandMap[`!${arr[1]}`]) client.say(channel, 'Command already exists.');
     else {
@@ -141,7 +132,7 @@ function addCommand({channel, tags, msg, arr}) {
   }
 }
 
-function removeCommand({channel, tags, arr}) {
+function removeCommand({ channel, tags, arr }) {
   if (isModerator(tags.badges) && arr.length > 1) {
     const removedCommands = _.remove(chatElements.simpleTextCommands, x => x.command === arr[1]);
 
@@ -155,7 +146,7 @@ function removeCommand({channel, tags, arr}) {
   }
 }
 
-function showRules({channel}) {
+function showRules({ channel }) {
   client.say(channel,
     `Please remember the channel rules:    
     1. Be kind
@@ -164,10 +155,10 @@ function showRules({channel}) {
     4. Only backseat if I ask for it`)
 }
 
-function showCommands({channel}) {
+function showCommands({ channel }) {
   let commandMsg = 'Commands: '
 
-  _.forIn(commandMap,(value, key) => commandMsg += `${key} `);
+  _.forIn(commandMap, (value, key) => { if (!value.mod_required) commandMsg += `${key} ` });
 
   client.say(channel, _.trimEnd(commandMsg));
 }
@@ -183,8 +174,8 @@ function onMessageHandler(channel, tags, msg, self) {
   const arr = trimmedMsg.split(' ');
   const commandName = _.toLower(arr[0]);
 
-  const command = commandMap[commandName];
-  if (command) command({ channel, tags, msg: trimmedMsg, arr });
+  const commandElement = commandMap[commandName];
+  if (commandElement) commandElement.command({ channel, tags, msg: trimmedMsg, arr });
 }
 
 function onConnectedHandler(addr, port) {
@@ -195,15 +186,34 @@ function onConnectedHandler(addr, port) {
 
 //#region Helper Functions
 
-function loadChatElementCallback(err, result, propName, defaultValue = null) {
-  const err_msg = `Error loading ${propName}.`;
-  const succ_msg = `Successfully loaded ${propName}!`;
+async function setup() {
+  const prom1 = loadChatElement(WhyQuoteModel, {}, 'whyQuotes');
+  const prom2 = loadOneChatElement(CounterModel, { name: 'deaths' }, 'deaths');
+  const prom3 = loadOneChatElement(CounterModel, { name: 'boops' }, 'boops');
+  const prom4 = loadChatElement(SimpleTextCommandModel, {}, 'simpleTextCommands').then(
+    () => chatElements.simpleTextCommands.forEach(element => addSimpleTextCommandToMap(element.command, element.text))
+  );
 
-  if (err) handleError(err_msg);
-  else if (result) {
-    chatElements[propName] = result;
-    console.log(succ_msg);
-  } else chatElements[propName] = defaultValue;
+  const promArray = [prom1, prom2, prom3, prom4];
+
+  await Promise.all(promArray);
+  console.log('All data loaded.')
+  client.connect();
+}
+
+async function loadChatElement(model, findObj, name) {
+  const promise = model.find(findObj).exec();
+  let result = await promise;
+  if (result) chatElements[name] = result;
+  else chatElements[name] = [];
+  console.log(`Loaded ${name}`);
+}
+
+async function loadOneChatElement(model, findObj, name) {
+  const promise = model.findOne(findObj).exec();
+  let result = await promise;
+  if (result) chatElements[name] = result;
+  console.log(`Loaded ${name}`);
 }
 
 function createDocument(channel, name, arr, model, createObj, afterSaveFunc = null) {
@@ -269,7 +279,7 @@ function setCounter(channel, tags, arr, counterName, count = NaN) {
 }
 
 function addSimpleTextCommandToMap(command, text) {
-  commandMap['!' + command] = ({channel}) => client.say(channel, text);
+  commandMap['!' + command] = { command: ({ channel }) => client.say(channel, text), mod_required: false };
 }
 
 //#endregion Helper Functions

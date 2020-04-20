@@ -90,10 +90,9 @@ Improvements:
   ☐ Switch metadata file to count
     More efficient and can check for count > 1
   ☐ Add summary to end of metadata file
-  ☐ Async dc from db at end of gen metadata file
+  ✔ Async dc from db at end of gen metadata file @done(20-04-19 21:48)
     https://stackoverflow.com/questions/39029893/why-is-the-mongodb-node-driver-generating-instance-pool-destroyed-errors
   ☐ Add some kind of emote handling for beginning and end of quotes
-  ☐ Add 'done' message at end of data load using async and only connect to chat once everything is loaded
   ☐ Look into pausebuffer if I don't want to roll my own spam control
     https://www.npmjs.com/package/@madelsberger/pausebuffer
   ☐ Interface with Streamlabs
@@ -104,9 +103,11 @@ Improvements:
   ☐ Add README
   ✔ Maybe refactor all of the ugly command params with deconstructors? @done(20-04-18 01:25)
   ✔ Look at refactoring with arrow functions @done(20-04-18 17:42)
-  ☐ Promisify initial load of data
+  ✔ Promisify initial load of data and only connect to chat once everything is loaded @done(20-04-20 18:25)
   ☐ DB-drive hard-coded values
   ☐ Make commands objects so more verbose things can be printed with !command
   ☐ Maybe just make setcounter take a param trackScoreboard instead of a function so increcmentcounter can be refactored
   ☐ Come up with a better way of creating cooldown functions to allow for more flexibility in params
-  ☐ Filter out mod commands from !commands
+  ✔ Filter out mod commands from !commands @done(20-04-20 18:25)
+  ☐ Learn promise-based Mongoose and rewrite callback functions
+  ☐ Refactor setup so it's abit cleaner and easier to add new promises
