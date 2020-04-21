@@ -42,6 +42,7 @@ const opts = {
 const client = new tmi.client(opts);
 
 client.on('message', onMessageHandler);
+client.on('subscription', onSubscriptionHandler);
 client.on('connected', onConnectedHandler);
 
 //#endregion tmi.js
@@ -212,14 +213,14 @@ function showCommands({ channel }) {
 //#region Event Handlers
  
 /**
- * Handler for onMessage event of connection to Twitch Chat. Used to respond to messages and execute commands.
+ * Handler for message event of connection to Twitch Chat. Used to respond to messages and execute commands.
  * @param {string} channel The Twitch channel to send any messages to.
  * @param {Tags} tags The Tags object from a Twitch message.
  * @param {string} msg The message received from a Twitch chat channel.
  * @param {boolean} self Whether the received message was from this bot or not.
  */
 function onMessageHandler(channel, tags, msg, self) {
-  if (self) { return; }
+  if (self || tags['message-type'] != 'chat') { return; }
 
   const trimmedMsg = msg.trim();
   const arr = trimmedMsg.split(' ');
@@ -227,6 +228,15 @@ function onMessageHandler(channel, tags, msg, self) {
 
   const commandElement = commandMap[commandName];
   if (commandElement) commandElement.command({ channel, tags, msg: trimmedMsg, arr });
+}
+
+/**
+ * Handler for subscription event of connection to Twitch Chat. Used to respond to subscriptions.
+ * @param {string} channel The Twitch channel to send any messages to.
+ * @param {string} username The username of the subscriber.
+ */
+function onSubscriptionHandler(channel, username) {
+  client.say(channel, `Thank you for the subscription @${username}! Enjoy your stay.`);
 }
 
 /**
