@@ -75,6 +75,13 @@ opts.channels.forEach(channel => rulesIntervals.push(setInterval(showRules, 1800
 
 //#region Command functions
 
+/**
+ * Adds a quote to the WhyQuote collection.
+ * @param {string} channel The Twitch channel to send any messages to.
+ * @param {Tags} tags The Tags object from a Twitch message.
+ * @param {string} msg The message received from a Twitch chat channel.
+ * @param {Array} arr An array containing the body of the Twitch message delimited by space.
+ */
 function addQuote({ channel, tags, msg, arr }) {
   const quote = msg.slice(arr[0].length + 1);
   if (quote !== '') {
@@ -82,6 +89,10 @@ function addQuote({ channel, tags, msg, arr }) {
   }
 }
 
+/**
+ * Sends a random WhyQuote to Twitch Chat.
+ * @param {string} channel The Twitch channel to send any messages to.
+ */
 function getQuote({ channel }) {
   if (chatElements.whyQuotes.length > 0) {
     const quoteIndex = Math.floor(Math.random() * chatElements.whyQuotes.length);
@@ -90,6 +101,10 @@ function getQuote({ channel }) {
   }
 }
 
+/**
+ * Increments the death counter and sends a message with the results to Twitch Chat.
+ * @param {string} channel The Twitch channel to send any messages to.
+ */
 function incrementDeathCounter({ channel }) {
   if (chatElements.deaths) {
     chatElements.deaths.count++;
@@ -97,6 +112,10 @@ function incrementDeathCounter({ channel }) {
   }
 }
 
+/**
+ * Increments the boop counter and sends a message with the results to Twitch Chat.
+ * @param {string} channel The Twitch channel to send any messages to.
+ */
 function incrementBoopCounter({ channel, tags }) {
   if (chatElements.boops) {
     chatElements.boops.count++;
@@ -111,6 +130,10 @@ function incrementBoopCounter({ channel, tags }) {
   }
 }
 
+/**
+ * Assembles the boop leaderboard showing the users with the top 3 boop counts and sends a message with the results to Twitch Chat.
+ * @param {string} channel The Twitch channel to send any messages to.
+ */
 function showBoopBoard({ channel }) {
   let scoreboardMessage = 'Top Boopers:'
 
@@ -121,6 +144,13 @@ function showBoopBoard({ channel }) {
   client.say(channel, _.trimEnd(scoreboardMessage, ','));
 }
 
+/**
+ * Adds a command to the SimpleTextCommand collection.
+ * @param {string} channel The Twitch channel to send any messages to.
+ * @param {Tags} tags The Tags object from a Twitch message.
+ * @param {string} msg The message received from a Twitch chat channel.
+ * @param {Array} arr An array containing the body of the Twitch message delimited by space.
+ */
 function addCommand({ channel, tags, msg, arr }) {
   if (isModerator(tags.badges) && arr.length > 2) {
     if (commandMap[`!${arr[1]}`]) client.say(channel, 'Command already exists.');
@@ -132,6 +162,12 @@ function addCommand({ channel, tags, msg, arr }) {
   }
 }
 
+/**
+ * Removes a command to the SimpleTextCommand collection.
+ * @param {string} channel The Twitch channel to send any messages to.
+ * @param {Tags} tags The Tags object from a Twitch message.
+ * @param {Array} arr An array containing the body of the Twitch message delimited by space.
+ */
 function removeCommand({ channel, tags, arr }) {
   if (isModerator(tags.badges) && arr.length > 1) {
     const removedCommands = _.remove(chatElements.simpleTextCommands, x => x.command === arr[1]);
@@ -146,6 +182,10 @@ function removeCommand({ channel, tags, arr }) {
   }
 }
 
+/**
+ * Sends a message containing the channel rules into Twitch Chat.
+ * @param {string} channel The Twitch channel to send any messages to.
+ */
 function showRules({ channel }) {
   client.say(channel,
     `Please remember the channel rules:    
@@ -155,6 +195,10 @@ function showRules({ channel }) {
     4. Only backseat if I ask for it`)
 }
 
+/**
+ * Sends a message containing non-moderator commands into Twitch Chat.
+ * @param {string} channel The Twitch channel to send any messages to.
+ */
 function showCommands({ channel }) {
   let commandMsg = 'Commands: '
 
@@ -166,7 +210,14 @@ function showCommands({ channel }) {
 //#endregion Command functions
 
 //#region Event Handlers
-
+ 
+/**
+ * Handler for onMessage event of connection to Twitch Chat. Used to respond to messages and execute commands.
+ * @param {string} channel The Twitch channel to send any messages to.
+ * @param {Tags} tags The Tags object from a Twitch message.
+ * @param {string} msg The message received from a Twitch chat channel.
+ * @param {boolean} self Whether the received message was from this bot or not.
+ */
 function onMessageHandler(channel, tags, msg, self) {
   if (self) { return; }
 
@@ -178,6 +229,11 @@ function onMessageHandler(channel, tags, msg, self) {
   if (commandElement) commandElement.command({ channel, tags, msg: trimmedMsg, arr });
 }
 
+/**
+ * Handler for onConnected event of connection to Twitch Chat. Used to confirm connection.
+ * @param {string} addr Address of Twitch IRC channel connected to.
+ * @param {number} port Port connected to.
+ */
 function onConnectedHandler(addr, port) {
   console.log(`* Connected to ${addr}:${port}`);
 }
@@ -186,6 +242,9 @@ function onConnectedHandler(addr, port) {
 
 //#region Helper Functions
 
+/**
+ * Loads all documents required for chat interaction into chatElements and connects to Twitch Chat.
+ */
 async function setup() {
   const prom1 = loadChatElement(WhyQuoteModel, {}, 'whyQuotes');
   const prom2 = loadOneChatElement(CounterModel, { name: 'deaths' }, 'deaths');
@@ -201,6 +260,13 @@ async function setup() {
   client.connect();
 }
 
+/**
+ * Loads multiple document object into chatElements.
+ * @param {model} model Model of objects to load.
+ * @param {Object} findObj Object containing search criteria for loaded objects.
+ * @param {string} name Property name of chatElemnts that the document objects will be assigned to.
+ * @returns {Promise<Document>} Promise containing loaded documents.
+ */
 async function loadChatElement(model, findObj, name) {
   const promise = model.find(findObj).exec();
   let result = await promise;
@@ -209,6 +275,13 @@ async function loadChatElement(model, findObj, name) {
   console.log(`Loaded ${name}`);
 }
 
+/**
+ * Loads a single document object into chatElements.
+ * @param {model} model Model of object to load.
+ * @param {Object} findObj Object containing search criteria for loaded object.
+ * @param {string} name Property name of chatElemnts that the document object will be assigned to.
+ * @returns {Promise<Document>} Promise containing loaded document.
+ */
 async function loadOneChatElement(model, findObj, name) {
   const promise = model.findOne(findObj).exec();
   let result = await promise;
@@ -216,6 +289,15 @@ async function loadOneChatElement(model, findObj, name) {
   console.log(`Loaded ${name}`);
 }
 
+/**
+ * Creates and saves a document object.
+ * @param {string} channel The Twitch channel to send any messages to.
+ * @param {string} name Name to display in chat message after document deletes.
+ * @param {Array} arr An array containing the body of the Twitch message delimited by space.
+ * @param {model} model Model of schema of document to create.
+ * @param {Object} createObj Object containing the initial values of the document to be created.
+ * @param {Function} afterSaveFunc Callback function to be called after document successfully saves.
+ */
 function createDocument(channel, name, arr, model, createObj, afterSaveFunc = null) {
   model.create(createObj, (err, result) => {
     if (err) handleError(`Error creating ${name}.`);
@@ -227,6 +309,13 @@ function createDocument(channel, name, arr, model, createObj, afterSaveFunc = nu
   });
 }
 
+/**
+ * Deleted documents matching the search criteria from the specified Collection of Documents.
+ * @param {string} channel The Twitch channel to send any messages to.
+ * @param {string} name Name to display in chat message after document deletes.
+ * @param {model} model Model of schema of document to delete.
+ * @param {Object} searchObj Search criteria to limit deletion of documents.
+ */
 function deleteDocument(channel, name, model, searchObj) {
   model.deleteOne(searchObj, (err) => {
     if (err) handleError(err);
@@ -234,6 +323,15 @@ function deleteDocument(channel, name, model, searchObj) {
   })
 }
 
+/**
+ * Updates a property on a document object if specified, then saves the document object.
+ * @param {string} channel The Twitch channel to send any messages to.
+ * @param {string} name Name to display in chat message after document updates.
+ * @param {Object} obj Object to update.
+ * @param {string} [prop] Property on obj to update.
+ * @param {*} [newVal] New value to set to prop.
+ * @param {string} [msg] Message to display in chat after document updates.
+ */
 function updateDocument(channel, name, obj, prop, newVal, msg) {
   if (prop) obj[prop] = newVal;
   if (!msg) msg = `${name} updated.`;
@@ -244,18 +342,30 @@ function updateDocument(channel, name, obj, prop, newVal, msg) {
   })
 }
 
+/**
+ * Handles an error by logging the results in the console.
+ * @param {string} msg String represting an error.
+ */
 function handleError(msg) {
   console.log(msg);
   return;
 }
 
+/**
+ * Returns whether the badges of a user allows them to access moderator actions.
+ * @param {Array} badges Array of badges for a given user in Twitch Chat.
+ */
 function isModerator(badges) {
   return badges && (_.has(badges, 'broadcaster') || _.has(badges, 'moderator'));
 }
 
-// thisArg - context in which to call the function; 'this' in the function's body
-// func - function to execute on a cooldown
-// timeout - number of milliseconds to wait before allowing fn to be called again
+/**
+ * Create a modified function that will prevent subsequent executions until a timer(cooldown) runs out.
+ * @param {this} thisArg Context to execute the function in.
+ * @param {Function} func Function to execute on a cooldown.
+ * @param {number} timeout Length of the cooldown.
+ * @returns {Function} A modified function with a cooldown that prevents rapid execution.
+ */
 function createCooldownFunction(thisArg, func, timeout) {
   let onCooldown = false;
 
@@ -268,6 +378,14 @@ function createCooldownFunction(thisArg, func, timeout) {
   }
 }
 
+/**
+ * A moderator-only function to set a counter to specified number.
+ * @param {string} channel The Twitch channel to send any messages to.
+ * @param {Tags} tags The Tags object from a Twitch message.
+ * @param {Array} arr An array containing the body of the Twitch message delimited by space.
+ * @param {string} counterName Name of the counter to modify.
+ * @param {number} count Count to set the counter to.
+ */
 function setCounter(channel, tags, arr, counterName, count = NaN) {
   if (chatElements[counterName] && isModerator(tags.badges)) {
     let num = 0;
@@ -278,6 +396,11 @@ function setCounter(channel, tags, arr, counterName, count = NaN) {
   }
 }
 
+/**
+ * Adds a simple text command to the command map.
+ * @param {string} command The keyword that will invoke the command.
+ * @param {string} text The text that will display with the command is invoked.
+ */
 function addSimpleTextCommandToMap(command, text) {
   commandMap['!' + command] = { command: ({ channel }) => client.say(channel, text), mod_required: false };
 }

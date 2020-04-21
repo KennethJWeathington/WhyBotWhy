@@ -79,7 +79,7 @@ Basics:
     for .env -->
     If your configuration file is called foobar.config, then you would commit a file called foobar.config.example to the repository,
     containing sample data. To run your program, you would create a local (not tracked) file called foobar.config with your real password data.
-  ☐ JSDoc
+  ✔ JSDoc @done(20-04-20 23:37)
 
 Ideas:
   ☐ Write site gui
