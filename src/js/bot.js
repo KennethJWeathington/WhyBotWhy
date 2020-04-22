@@ -4,6 +4,7 @@ require('dotenv').config()
 const tmi = require('tmi.js');
 const _ = require('lodash');
 const mongoose = require('mongoose');
+const request = require('request');
 
 //#endregion Requires
 
@@ -66,6 +67,7 @@ commandMap['!addcommand'] = { command: addCommand, mod_required: true };
 commandMap['!removecommand'] = { command: removeCommand, mod_required: true };
 commandMap['!rules'] = { command: showRules, mod_required: false };
 commandMap['!commands'] = { command: showCommands, mod_required: false };
+commandMap['!followage'] = { command: showFollowage, mod_required: false };
 
 setup();
 
@@ -206,6 +208,19 @@ function showCommands({ channel }) {
   _.forIn(commandMap, (value, key) => { if (!value.mod_required) commandMsg += `${key} ` });
 
   client.say(channel, _.trimEnd(commandMsg));
+}
+
+/**
+ * Sends a message in Twitch Chat which contains how long the user has been following the channel.
+ * @param {string} channel The Twitch channel to send any messages to.
+ * @param {Tags} tags The Tags object from a Twitch message.
+ */
+function showFollowage({ channel, tags }) {
+  request(`https://api.2g.be/twitch/followage/${process.env.CHANNEL_NAME}/${tags.username}?format=mwdhms`,(error, response, body) => {
+    if(error) handleError(error);
+    if(response && response.statusCode === 200)
+      client.say(channel, `@${body}`);
+  });
 }
 
 //#endregion Command functions

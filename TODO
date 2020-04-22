@@ -73,6 +73,7 @@ Basics:
   This enables you to authenticate programmatically. To learn more, read the Apps & Authentication Guide.
   https://dev.twitch.tv/docs/authentication/#registration
   https://dev.twitch.tv/docs/authentication
+  https://twitch-js.netlify.app/ - example
   ✔ Add metadata script @done(20-04-12 01:38)
     Find a way to parameretize the create so it can be one big metadata script maybe?
   ✔ put on github @done(20-04-15 18:43)
@@ -111,3 +112,6 @@ Improvements:
   ✔ Filter out mod commands from !commands @done(20-04-20 18:25)
   ☐ Learn promise-based Mongoose and rewrite callback functions
   ☐ Refactor setup so it's abit cleaner and easier to add new promises
+  ☐ Look into other twitch modules
+    https://www.npmjs.com/package/twitch
+    https://github.com/twitch-js/twitch-js
