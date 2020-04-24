@@ -113,9 +113,10 @@ Improvements:
   ☐ Come up with a better way of creating cooldown functions to allow for more flexibility in params
   ✔ Filter out mod commands from !commands @done(20-04-20 18:25)
   ☐ Learn promise-based Mongoose and rewrite callback functions
-  ☐ Refactor setup so it's abit cleaner and easier to add new promises
+  ✔ Refactor setup so it's abit cleaner and easier to add new promises @done(20-04-23 20:49)
   ☐ Look into other twitch modules
     https://www.npmjs.com/package/twitch
     https://github.com/twitch-js/twitch-js
   ☐ Add null checking to env file
   ☐ Look into a license
+  ☐ Scrub added commands for mod commands

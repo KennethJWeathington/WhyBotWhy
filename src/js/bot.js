@@ -88,7 +88,7 @@ opts.channels.forEach(channel => rulesIntervals.push(setInterval(showRules, proc
 function addQuote({ channel, tags, msg, arr }) {
   const quote = msg.slice(arr[0].length + 1);
   if (quote !== '') {
-    createDocument(channel, 'Quote', chatElements.whyQuotes, WhyQuoteModel, { text: quote, user_added: tags.username });
+    createDocument(channel, 'Quote', chatElements.whyQuotes, WhyQuoteModel, { text: quote.replace(/\/|\\/g,''), user_added: tags.username });
   }
 }
 
@@ -159,7 +159,7 @@ function addCommand({ channel, tags, msg, arr }) {
     if (commandMap[`!${arr[1]}`]) client.say(channel, 'Command already exists.');
     else {
       createDocument(channel, `Command !${arr[1]}`, chatElements.simpleTextCommands, SimpleTextCommandModel,
-        { command: arr[1], text: msg.slice(arr[0].length + arr[1].length + 2) },
+        { command: arr[1], text: msg.slice(arr[0].length + arr[1].length + 2).replace(/\/|\\/g,'') },
         (result) => addSimpleTextCommandToMap(result.command, result.text));
     }
   }
