@@ -119,4 +119,4 @@ Improvements:
     https://github.com/twitch-js/twitch-js
   ☐ Add null checking to env file
   ☐ Look into a license
-  ☐ Scrub added commands for mod commands
+  ✔ Scrub added commands for mod commands @done(20-04-23 21:14)

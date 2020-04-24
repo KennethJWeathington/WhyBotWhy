@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node src/js/bot.js",
-    "genmeta": "node src/scripts/gen_metadata.js"
+    "genmeta": "node src/scripts/gen_metadata.js",
+    "ts": "tsc -w"
   },
   "author": "Jake Weathington",
   "license": "ISC",
@@ -19,6 +20,10 @@
     "tmi.js": "^1.5.0"
   },
   "devDependencies": {
+    "@types/lodash": "^4.14.150",
+    "@types/mongoose": "^5.7.13",
+    "@types/node": "^13.13.2",
+    "@types/tmi.js": "^1.4.0",
     "eslint": "^6.8.0"
   }
 }
