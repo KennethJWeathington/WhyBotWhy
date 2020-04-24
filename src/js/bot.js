@@ -52,8 +52,8 @@ client.on('connected', onConnectedHandler);
 
 const chatElements = {};
 
-const cooldownIncrementDeathCounter = createCooldownFunction(this, incrementDeathCounter, 10000);
-const cooldownIncrementBoopCounter = createCooldownFunction(this, incrementBoopCounter, 10000);
+const cooldownIncrementDeathCounter = createCooldownFunction(this, incrementDeathCounter, process.env.COMMAND_TIMEOUT);
+const cooldownIncrementBoopCounter = createCooldownFunction(this, incrementBoopCounter, process.env.COMMAND_TIMEOUT);
 
 const commandMap = new Map();
 commandMap['!whyme'] = { command: ({ channel, tags }) => client.say(channel, `Why @${tags.username}, why???`), mod_required: false };
@@ -72,7 +72,7 @@ commandMap['!followage'] = { command: showFollowage, mod_required: false };
 setup();
 
 const rulesIntervals = [];
-opts.channels.forEach(channel => rulesIntervals.push(setInterval(showRules, 1800000, channel)));
+opts.channels.forEach(channel => rulesIntervals.push(setInterval(showRules, process.env.RULES_TIMEOUT, { channel })));
 
 //#endregion Chat interaction
 
@@ -111,7 +111,7 @@ function getQuote({ channel }) {
 function incrementDeathCounter({ channel }) {
   if (chatElements.deaths) {
     chatElements.deaths.count++;
-    updateDocument(channel, null, chatElements.deaths, null, null, `Troy has died embarrassingly ${chatElements.deaths.count} times on stream!`);
+    updateDocument(channel, null, chatElements.deaths, null, null, `${process.env.STREAMER_NAME} has died embarrassingly ${chatElements.deaths.count} times on stream!`);
   }
 }
 
@@ -190,12 +190,7 @@ function removeCommand({ channel, tags, arr }) {
  * @param {string} channel The Twitch channel to send any messages to.
  */
 function showRules({ channel }) {
-  client.say(channel,
-    `Please remember the channel rules:    
-    1. Be kind
-    2. No politics or religion
-    3. No spam
-    4. Only backseat if I ask for it`)
+  client.say(channel,process.env.RULES_COMMAND_TEXT);
 }
 
 /**
@@ -271,14 +266,13 @@ function onConnectedHandler(addr, port) {
  * Loads all documents required for chat interaction into chatElements and connects to Twitch Chat.
  */
 async function setup() {
-  const prom1 = loadChatElement(WhyQuoteModel, {}, 'whyQuotes');
-  const prom2 = loadOneChatElement(CounterModel, { name: 'deaths' }, 'deaths');
-  const prom3 = loadOneChatElement(CounterModel, { name: 'boops' }, 'boops');
-  const prom4 = loadChatElement(SimpleTextCommandModel, {}, 'simpleTextCommands').then(
-    () => chatElements.simpleTextCommands.forEach(element => addSimpleTextCommandToMap(element.command, element.text))
-  );
-
-  const promArray = [prom1, prom2, prom3, prom4];
+  const promArray = [
+    loadChatElement(WhyQuoteModel, {}, 'whyQuotes', false, []),
+    loadChatElement(CounterModel, { name: 'deaths' }, 'deaths', true),
+    loadChatElement(CounterModel, { name: 'boops' }, 'boops', true),
+    loadChatElement(SimpleTextCommandModel, {}, 'simpleTextCommands', false, []).then(
+      () => chatElements.simpleTextCommands.forEach(element => addSimpleTextCommandToMap(element.command, element.text)))
+  ]
 
   await Promise.all(promArray);
   console.log('All data loaded.')
@@ -290,29 +284,21 @@ async function setup() {
  * @param {model} model Model of objects to load.
  * @param {Object} findObj Object containing search criteria for loaded objects.
  * @param {string} name Property name of chatElemnts that the document objects will be assigned to.
+ * @param {boolean} loadOne Searches for and loads a single document if true.
+ * @param {*} def Default value if no matching document found.
  * @returns {Promise<Document>} Promise containing loaded documents.
  */
-async function loadChatElement(model, findObj, name) {
-  const promise = model.find(findObj).exec();
+async function loadChatElement(model, findObj, name, loadOne, def = null) {
+  let promise;
+  if(loadOne) promise = model.findOne(findObj).exec();
+  else promise = model.find(findObj).exec();
+
   let result = await promise;
   if (result) chatElements[name] = result;
-  else chatElements[name] = [];
+  else if(def) chatElements[name] = def;
   console.log(`Loaded ${name}`);
 }
 
-/**
- * Loads a single document object into chatElements.
- * @param {model} model Model of object to load.
- * @param {Object} findObj Object containing search criteria for loaded object.
- * @param {string} name Property name of chatElemnts that the document object will be assigned to.
- * @returns {Promise<Document>} Promise containing loaded document.
- */
-async function loadOneChatElement(model, findObj, name) {
-  const promise = model.findOne(findObj).exec();
-  let result = await promise;
-  if (result) chatElements[name] = result;
-  console.log(`Loaded ${name}`);
-}
 
 /**
  * Creates and saves a document object.

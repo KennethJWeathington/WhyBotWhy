@@ -25,15 +25,16 @@ Commands:
     Make sure to sanitize commands
     Make sure to validate, ie check if command with that name already exists, check that a mod is the one creating it, etc
   ☐ alter simple text commands
+    Low priority feature because removing and than adding the command is marginally more work
   ✔ remove simple text commands @done(20-04-16 14:21)
-  ☐ !followage
+  ✔ !followage @done(20-04-23 11:16)
     Heres a good hint https://community.nightdev.com/t/how-to-do-a-followage-command/8996
   ☐ Add quote purge feature by user, only usable by mods
   ✔ Add reset death counter command, mods only @done(20-04-12 19:18)
   ✔ !commands @done(20-04-19 21:06)
     Programmatically spit out list of commands
     Make a seperate one for mod commands, come up with a way to determine mod commands
-  ☐ Auto sub thank
+  ✔ Auto sub thank @done(20-04-23 11:16)
   ✔ Boopboard @done(20-04-15 19:33)
   !boopleaderboard would output like(:)
   Top Boopers(:)
@@ -68,12 +69,13 @@ Basics:
     https://www.openshift.com/
     Heroku, glitch
   ☐ Continous integration
-  ☐ set up programmatic oauth
+  ✘ set up programmatic oauth @cancelled(20-04-23 11:15)
   To authenticate your chatbot in a production setting, we recommend you register your app (chatbot) and use the OAuth Authorization code flow. 
   This enables you to authenticate programmatically. To learn more, read the Apps & Authentication Guide.
   https://dev.twitch.tv/docs/authentication/#registration
   https://dev.twitch.tv/docs/authentication
   https://twitch-js.netlify.app/ - example
+  Twitch API v5 OAUTH tokens don't expire so no need to do this
   ✔ Add metadata script @done(20-04-12 01:38)
     Find a way to parameretize the create so it can be one big metadata script maybe?
   ✔ put on github @done(20-04-15 18:43)
@@ -115,3 +117,5 @@ Improvements:
   ☐ Look into other twitch modules
     https://www.npmjs.com/package/twitch
     https://github.com/twitch-js/twitch-js
+  ☐ Add null checking to env file
+  ☐ Look into a license
