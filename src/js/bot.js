@@ -7,8 +7,8 @@ const _ = require("lodash");
 const mongoose = require("mongoose");
 const request = require('request');
 const whyquote_1 = require("./models/whyquote");
-const CounterModel = require('../models/counter');
-const SimpleTextCommandModel = require('../models/simpletextcommand');
+const counter_1 = require("./models/counter");
+const simpletextcommand_1 = require("./models/simpletextcommand");
 //#endregion Imports
 //#region Mongoose
 const mongoDB = process.env.DB_CONN_STRING;
@@ -44,32 +44,33 @@ client.on('subscription', onSubscriptionHandler);
 client.on('connected', onConnectedHandler);
 //#endregion tmi.js
 //#region Chat interaction
-const t = whyquote_1.default.create();
-class WhyQuote {
+class ChatElements {
 }
-const chatElements = {
-    whyQuotes: mongoose.Model < IWhyQuote > ,
-    boops: {},
-    deaths: {}
-};
-const cooldownIncrementDeathCounter = createCooldownFunction(this, incrementDeathCounter, process.env.COMMAND_TIMEOUT);
-const cooldownIncrementBoopCounter = createCooldownFunction(this, incrementBoopCounter, process.env.COMMAND_TIMEOUT);
+class Command {
+    constructor(command, mod_required) {
+        this.command = command;
+        this.mod_required = mod_required;
+        this.command = command;
+        this.mod_required = mod_required;
+    }
+}
+const chatElements = new ChatElements();
+const cooldownIncrementDeathCounter = createCooldownFunction(this, incrementDeathCounter, cooldown);
+const cooldownIncrementBoopCounter = createCooldownFunction(this, incrementBoopCounter, cooldown);
 const commandMap = new Map();
-commandMap['!whyme'] = { command: ({ channel, tags }) => client.say(channel, `Why @${tags.username}, why???`), mod_required: false };
-commandMap['!addquote'] = { command: addQuote, mod_required: false };
-commandMap['!quote'] = { command: getQuote, mod_required: false };
-commandMap['!death'] = { command: cooldownIncrementDeathCounter, mod_required: false };
-commandMap['!setdeaths'] = { command: ({ channel, tags, arr }) => setCounter(channel, tags, arr, 'deaths'), mod_required: true };
-commandMap['!boop'] = { command: cooldownIncrementBoopCounter, mod_required: false };
-commandMap['!boopboard'] = { command: showBoopBoard, mod_required: false };
-commandMap['!addcommand'] = { command: addCommand, mod_required: true };
-commandMap['!removecommand'] = { command: removeCommand, mod_required: true };
-commandMap['!rules'] = { command: showRules, mod_required: false };
-commandMap['!commands'] = { command: showCommands, mod_required: false };
-commandMap['!followage'] = { command: showFollowage, mod_required: false };
+commandMap.set('!whyme', new Command(({ channel, tags }) => client.say(channel, `Why @${tags.username}, why???`), false));
+commandMap.set('!addquote', new Command(addQuote, false));
+commandMap.set('!quote', new Command(getQuote, false));
+commandMap.set('!death', new Command(cooldownIncrementDeathCounter, false));
+commandMap.set('!setdeaths', new Command(({ channel, tags, arr }) => setCounter(channel, tags, arr, 'deaths'), true));
+commandMap.set('!boop', new Command(cooldownIncrementBoopCounter, false));
+commandMap.set('!boopboard', new Command(showBoopBoard, false));
+commandMap.set('!addcommand', new Command(addCommand, true));
+commandMap.set('!removecommand', new Command(removeCommand, true));
+commandMap.set('!rules', new Command(showRules, false));
+commandMap.set('!commands', new Command(showCommands, false));
+commandMap.set('!followage', new Command(showFollowage, false));
 setup();
-const rulesIntervals = [];
-opts.channels.forEach(channel => rulesIntervals.push(setInterval(showRules, rulesInterval, { channel })));
 //#endregion Chat interaction
 //#region Command functions
 /**
@@ -113,7 +114,7 @@ function incrementDeathCounter({ channel }) {
 function incrementBoopCounter({ channel, tags }) {
     if (chatElements.boops) {
         chatElements.boops.count++;
-        let user = chatElements.boops.scoreboard.find(x => x.userName = tags.username);
+        let user = chatElements.boops.scoreboard.find(x => x.user = tags.username);
         if (user)
             user.count = user.count + 1;
         else
@@ -146,7 +147,7 @@ function addCommand({ channel, tags, msg, arr }) {
         if (commandMap[`!${arr[1]}`])
             client.say(channel, 'Command already exists.');
         else {
-            createDocument(channel, `Command !${arr[1]}`, chatElements.simpleTextCommands, SimpleTextCommandModel, { command: arr[1], text: msg.slice(arr[0].length + arr[1].length + 2).replace(/\/|\\/g, '') }, (result) => addSimpleTextCommandToMap(result.command, result.text));
+            createDocument(channel, `Command !${arr[1]}`, chatElements.simpleTextCommands, simpletextcommand_1.default, { command: arr[1], text: msg.slice(arr[0].length + arr[1].length + 2).replace(/\/|\\/g, '') }, (result) => addSimpleTextCommandToMap(result.command, result.text));
         }
     }
 }
@@ -163,7 +164,7 @@ function removeCommand({ channel, tags, arr }) {
             removedCommands.forEach(element => {
                 const fullCommand = `!${element.command}`;
                 delete commandMap[fullCommand];
-                deleteDocument(channel, `Command ${fullCommand}`, SimpleTextCommandModel, { command: element.command });
+                deleteDocument(channel, `Command ${fullCommand}`, simpletextcommand_1.default, { command: element.command });
             });
         }
         else {
@@ -184,7 +185,8 @@ function showRules({ channel }) {
  */
 function showCommands({ channel }) {
     let commandMsg = 'Commands: ';
-    _.forIn(commandMap, (value, key) => { if (!value.mod_required)
+    // _.forIn(commandMap, (value: Command, key: string) => { if (!value.mod_required) commandMsg += `${key} ` });
+    commandMap.forEach((value, key) => { if (!value.mod_required)
         commandMsg += `${key} `; });
     client.say(channel, _.trimEnd(commandMsg));
 }
@@ -200,6 +202,10 @@ function showFollowage({ channel, tags }) {
         if (response && response.statusCode === 200)
             client.say(channel, `@${body}`);
     });
+}
+function startIntervals() {
+    const rulesIntervals = [];
+    opts.channels.forEach(channel => rulesIntervals.push(setInterval(showRules, rulesInterval, { channel })));
 }
 //#endregion Command functions
 //#region Event Handlers
@@ -217,7 +223,7 @@ function onMessageHandler(channel, tags, msg, self) {
     const trimmedMsg = msg.trim();
     const arr = trimmedMsg.split(' ');
     const commandName = _.toLower(arr[0]);
-    const commandElement = commandMap[commandName];
+    const commandElement = commandMap.get(commandName);
     if (commandElement)
         commandElement.command({ channel, tags, msg: trimmedMsg, arr });
 }
@@ -245,13 +251,14 @@ function onConnectedHandler(addr, port) {
 async function setup() {
     const promArray = [
         loadChatElement(whyquote_1.default, {}, 'whyQuotes', false, []),
-        loadChatElement(CounterModel, { name: 'deaths' }, 'deaths', true),
-        loadChatElement(CounterModel, { name: 'boops' }, 'boops', true),
-        loadChatElement(SimpleTextCommandModel, {}, 'simpleTextCommands', false, []).then(() => chatElements.simpleTextCommands.forEach(element => addSimpleTextCommandToMap(element.command, element.text)))
+        loadChatElement(counter_1.default, { name: 'deaths' }, 'deaths', true),
+        loadChatElement(counter_1.default, { name: 'boops' }, 'boops', true),
+        loadChatElement(simpletextcommand_1.default, {}, 'simpleTextCommands', false, []).then(() => chatElements.simpleTextCommands.forEach(element => addSimpleTextCommandToMap(element.command, element.text)))
     ];
     await Promise.all(promArray);
     console.log('All data loaded.');
-    client.connect();
+    await client.connect();
+    startIntervals();
 }
 /**
  * Loads multiple document object into chatElements.

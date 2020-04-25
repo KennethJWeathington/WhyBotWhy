@@ -1,8 +1,6 @@
-const mongoose = require('mongoose');
+import * as mongoose from 'mongoose';
 
-const Schema = mongoose.Schema;
-
-const CounterSchema = new Schema(
+const CounterSchema = new mongoose.Schema(
   {
     name: {type: String, required: true, max: 100},
     count: {type: Number, required: true, default: 0},
@@ -10,5 +8,17 @@ const CounterSchema = new Schema(
   }
 );
 
-//Export model
-module.exports = mongoose.model('Counter', CounterSchema);
+export class CounterScoreboard {
+  constructor(public user: string, public count: number) {
+    this.user = user;
+    this.count = count;
+  }
+}
+
+export interface ICounter extends mongoose.Document {
+  name:string,
+  count: number,
+  scoreboard: CounterScoreboard[]
+}
+
+export default mongoose.model<ICounter>('Counter', CounterSchema);

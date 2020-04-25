@@ -1,13 +1,15 @@
-const mongoose = require('mongoose');
+import * as mongoose from 'mongoose';
 
-const Schema = mongoose.Schema;
-
-const SimpleTextCommandSchema = new Schema(
+const SimpleTextCommandSchema = new mongoose.Schema(
   {
     command: {type: String, required: true, max: 100},
     text: {type: String, required: true, max: 500}
   }
 );
 
-//Export model
-module.exports = mongoose.model('SimpleTextCommand', SimpleTextCommandSchema);
+export interface ISimpleTextCommand extends mongoose.Document {
+  command:string,
+  text: string
+}
+
+export default mongoose.model<ISimpleTextCommand>('SimpleTextCommand', SimpleTextCommandSchema);

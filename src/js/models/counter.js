@@ -1,9 +1,18 @@
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
-const CounterSchema = new Schema({
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const mongoose = require("mongoose");
+const CounterSchema = new mongoose.Schema({
     name: { type: String, required: true, max: 100 },
     count: { type: Number, required: true, default: 0 },
     scoreboard: [{ user: String, count: Number }]
 });
-//Export model
-module.exports = mongoose.model('Counter', CounterSchema);
+class CounterScoreboard {
+    constructor(user, count) {
+        this.user = user;
+        this.count = count;
+        this.user = user;
+        this.count = count;
+    }
+}
+exports.CounterScoreboard = CounterScoreboard;
+exports.default = mongoose.model('Counter', CounterSchema);

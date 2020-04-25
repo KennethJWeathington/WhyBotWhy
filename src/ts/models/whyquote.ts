@@ -1,6 +1,6 @@
 import * as mongoose from 'mongoose';
 
-const WhyQuoteSchema = new Schema(
+const WhyQuoteSchema = new mongoose.Schema(
   {
     text: {type: String, required: true, max: 100},
     user_added: String,
