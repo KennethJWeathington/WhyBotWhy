@@ -110,7 +110,7 @@ Improvements:
   ☐ DB-drive hard-coded values
   ☐ Make commands objects so more verbose things can be printed with !command
   ☐ Maybe just make setcounter take a param trackScoreboard instead of a function so increcmentcounter can be refactored
-  ☐ Come up with a better way of creating cooldown functions to allow for more flexibility in params
+  ✔ Come up with a better way of creating cooldown functions to allow for more flexibility in params @done(20-04-25 17:08)
   ✔ Filter out mod commands from !commands @done(20-04-20 18:25)
   ☐ Learn promise-based Mongoose and rewrite callback functions
   ✔ Refactor setup so it's abit cleaner and easier to add new promises @done(20-04-23 20:49)
@@ -120,3 +120,5 @@ Improvements:
   ☐ Add null checking to env file
   ☐ Look into a license
   ✔ Scrub added commands for mod commands @done(20-04-23 21:14)
+  ☐ Check for duplicate simpleTextCommands on add
+  ✔ Convert to Typescript @done(20-04-25 17:08)
