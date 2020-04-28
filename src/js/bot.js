@@ -157,7 +157,8 @@ function addCommand(args) {
         if (commandMap.has(`!${args.msgArray[1]}`))
             client.say(args.channel, 'Command already exists.');
         else {
-            createDocument(args.channel, `Command !${args.msgArray[1]}`, chatElements.simpleTextCommands, simpletextcommand_1.default, { command: args.msgArray[1], text: args.msg.slice(args.msgArray[0].length + args.msgArray[1].length + 2).replace(/\/|\\/g, '') }, (result) => addSimpleTextCommandToMap(result.command, result.text));
+            const commandText = args.msg.slice(args.msgArray[0].length + args.msgArray[1].length + 2).replace(/\/|\\/g, '');
+            createDocument(args.channel, `Command !${args.msgArray[1]}`, chatElements.simpleTextCommands, simpletextcommand_1.default, { command: args.msgArray[1], text: commandText }).then((result) => addSimpleTextCommandToMap(result.command, result.text));
         }
     }
 }
@@ -300,17 +301,13 @@ async function loadChatElement(model, findObj, name, loadOne, def = null) {
  * @param {Object} createObj Object containing the initial values of the document to be created.
  * @param {Function} afterSaveFunc Callback function to be called after document successfully saves.
  */
-function createDocument(channel, name, arr, model, createObj, afterSaveFunc = null) {
-    model.create(createObj, (err, result) => {
-        if (err)
-            handleError(`Error creating ${name}.`);
-        else {
-            arr.push(result);
-            if (afterSaveFunc)
-                afterSaveFunc(result);
-            client.say(channel, `${name} saved!`);
-        }
+function createDocument(channel, name, arr, model, createObj) {
+    let promise = model.create(createObj).then((result) => {
+        arr.push(result);
+        client.say(channel, `${name} saved!`);
+        return result;
     });
+    return promise;
 }
 /**
  * Deleted documents matching the search criteria from the specified Collection of Documents.

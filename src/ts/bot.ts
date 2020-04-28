@@ -184,9 +184,11 @@ function addCommand(args: CommandArguments) {
   if (isModerator(args.userState.badges) && args.msgArray.length > 2) {
     if (commandMap.has(`!${args.msgArray[1]}`)) client.say(args.channel, 'Command already exists.');
     else {
+      const commandText = args.msg.slice(args.msgArray[0].length + args.msgArray[1].length + 2).replace(/\/|\\/g, '');
+
       createDocument(args.channel, `Command !${args.msgArray[1]}`, chatElements.simpleTextCommands, SimpleTextCommandModel,
-        { command: args.msgArray[1], text: args.msg.slice(args.msgArray[0].length + args.msgArray[1].length + 2).replace(/\/|\\/g,'') },
-        (result) => addSimpleTextCommandToMap(result.command, result.text));
+        { command: args.msgArray[1], text: commandText }).then(
+          (result) => addSimpleTextCommandToMap(result.command, result.text));
     }
   }
 }
@@ -340,15 +342,14 @@ async function loadChatElement(model: mongoose.Model<any>, findObj: {}, name: st
  * @param {Object} createObj Object containing the initial values of the document to be created.
  * @param {Function} afterSaveFunc Callback function to be called after document successfully saves.
  */
-function createDocument(channel: string, name: string, arr: any[], model: mongoose.Model<any>, createObj: {}, afterSaveFunc = null) {
-  model.create(createObj, (err: any, result: mongoose.Model<any>[]) => {
-    if (err) handleError(`Error creating ${name}.`);
-    else {
-      arr.push(result);
-      if (afterSaveFunc) afterSaveFunc(result);
-      client.say(channel, `${name} saved!`);
-    }
+function createDocument<T extends mongoose.Document>(channel: string, name: string, arr: T[], model: mongoose.Model<T>, createObj: {}) {
+  let promise = model.create(createObj).then((result) => {
+    arr.push(result);
+    client.say(channel, `${name} saved!`);
+    return result;
   });
+
+  return promise;
 }
 
 /**
