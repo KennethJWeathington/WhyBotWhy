@@ -120,5 +120,6 @@ Improvements:
   ☐ Add null checking to env file
   ☐ Look into a license
   ✔ Scrub added commands for mod commands @done(20-04-23 21:14)
-  ☐ Check for duplicate simpleTextCommands on add
+  ✔ Check for duplicate simpleTextCommands on add @done(20-04-27 19:01)
   ✔ Convert to Typescript @done(20-04-25 17:08)
+  ☐ Add unit testing (look into Mocha and Jest)

@@ -15,3 +15,5 @@ var schema = new Schema(
   nested: { stuff: { type: String, lowercase: true, trim: true } }
 })
 https://mongoosejs.com/docs/schematypes.html#maps
+
+https://www.twitch.tv/popout/the_stormblessed/chat?popout=

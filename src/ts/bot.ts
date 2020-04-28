@@ -6,7 +6,7 @@ import * as _ from 'lodash';
 import * as mongoose from 'mongoose';
 import * as request from 'request';
 import WhyQuoteModel, { IWhyQuote } from './models/whyquote';
-import CounterModel, { ICounter } from './models/counter';
+import CounterModel, { ICounter, CounterScoreboard } from './models/counter';
 import SimpleTextCommandModel, { ISimpleTextCommand } from './models/simpletextcommand';
 
 dotenv.config();
@@ -80,13 +80,16 @@ class Command {
 
 const chatElements = new ChatElements();
 
+const cooldownDeathCounter = createCooldownCommand(this, incrementDeathCounter, cooldown);
+const cooldownBoopCounter = createCooldownCommand(this, incrementBoopCounter, cooldown);
+
 const commandMap = new Map<string, Command>();
 commandMap.set('!whyme', new Command((args: CommandArguments) => client.say(args.channel, `Why @${args.userState.username}, why???`), false));
 commandMap.set('!addquote', new Command(addQuote, false));
 commandMap.set('!quote', new Command(getQuote, false));
-commandMap.set('!death', new Command(createCooldownCommand(this, incrementDeathCounter, cooldown), false));
+commandMap.set('!death', new Command(cooldownDeathCounter, false));
 commandMap.set('!setdeaths', new Command((args: CommandArguments) => setCounter(args, 'deaths'), true));
-commandMap.set('!boop', new Command(createCooldownCommand(this, incrementBoopCounter, cooldown), false));
+commandMap.set('!boop', new Command(cooldownBoopCounter, false));
 commandMap.set('!boopboard', new Command(showBoopBoard, false));
 commandMap.set('!addcommand', new Command(addCommand, true));
 commandMap.set('!removecommand', new Command(removeCommand, true));
@@ -109,7 +112,7 @@ setup();
  */
 function addQuote(args: CommandArguments) {
   const quote = args.msg.slice(args.msgArray[0].length + 1);
-  if (quote !== '') {
+  if (quote) {
     createDocument(args.channel, 'Quote', chatElements.whyQuotes, WhyQuoteModel, { text: quote.replace(/\/|\\/g,''), user_added: args.userState.username });
   }
 }
@@ -131,10 +134,7 @@ function getQuote(args: CommandArguments) {
  * @param {string} channel The Twitch channel to send any messages to.
  */
 function incrementDeathCounter(args: CommandArguments) {
-  if (chatElements.deaths) {
-    chatElements.deaths.count++;
-    updateDocument(args.channel, null, chatElements.deaths, null, null, `${process.env.STREAMER_NAME} has died embarrassingly ${chatElements.deaths.count} times on stream!`);
-  }
+  incrementCounter(args, chatElements.deaths, `${process.env.STREAMER_NAME} has died embarrassingly {count} times on stream!`,false);
 }
 
 /**
@@ -142,17 +142,21 @@ function incrementDeathCounter(args: CommandArguments) {
  * @param {string} channel The Twitch channel to send any messages to.
  */
 function incrementBoopCounter(args: CommandArguments) {
-  if (chatElements.boops) {
-    chatElements.boops.count++;
+  incrementCounter(args, chatElements.boops, `@${args.userState.username} booped the snoot! The snoot has been booped {count} times.`, true);
+}
 
-    let user = chatElements.boops.scoreboard.find(x => x.user = args.userState.username);
-    if (user) user.count = user.count + 1;
-    else chatElements.boops.scoreboard.push({ user: args.userState.username, count: 1 });
+function incrementCounter(args: CommandArguments, counter: ICounter, updateMsg: string, trackScoreboard: boolean) {
+  counter.count++;
 
-    chatElements.boops.scoreboard = chatElements.boops.scoreboard.sort((a, b) => b.count - a.count);
+  if(trackScoreboard) {
+    let user = counter.scoreboard.find(x => x.user = args.userState.username);
+    // if (user) user.count = user.count + 1;
+    if (user) user.count++;
+    else counter.scoreboard.push(new CounterScoreboard(args.userState.username, 1));
 
-    updateDocument(args.channel, null, chatElements.boops, null, null, `@${args.userState.username} booped the snoot! The snoot has been booped ${chatElements.boops.count} times.`);
+    counter.scoreboard = counter.scoreboard.sort((a, b) => b.count - a.count);
   }
+  updateDocument(args.channel, null, counter, null, null, updateMsg.replace('{count}',counter.count.toString()));
 }
 
 /**
@@ -178,7 +182,7 @@ function showBoopBoard(args: CommandArguments) {
  */
 function addCommand(args: CommandArguments) {
   if (isModerator(args.userState.badges) && args.msgArray.length > 2) {
-    if (commandMap[`!${args.msgArray[1]}`]) client.say(args.channel, 'Command already exists.');
+    if (commandMap.has(`!${args.msgArray[1]}`)) client.say(args.channel, 'Command already exists.');
     else {
       createDocument(args.channel, `Command !${args.msgArray[1]}`, chatElements.simpleTextCommands, SimpleTextCommandModel,
         { command: args.msgArray[1], text: args.msg.slice(args.msgArray[0].length + args.msgArray[1].length + 2).replace(/\/|\\/g,'') },
@@ -200,7 +204,7 @@ function removeCommand(args: CommandArguments) {
     if (removedCommands.length > 0) {
       removedCommands.forEach(element => {
         const fullCommand = `!${element.command}`;
-        delete commandMap[fullCommand];
+        commandMap.delete(fullCommand);
         deleteDocument(args.channel, `Command ${fullCommand}`, SimpleTextCommandModel, { command: element.command });
       });
     } else { client.say(args.channel, 'Command not found.'); }
@@ -409,7 +413,7 @@ function createCooldownCommand(thisArg, func: (args: CommandArguments) => void, 
 
   return (args: CommandArguments) => {
     if (!onCooldown) {
-      func.apply(thisArg, args);
+      func.call(thisArg, args);
       onCooldown = true;
       setTimeout(() => onCooldown = false, timeout);
     }
