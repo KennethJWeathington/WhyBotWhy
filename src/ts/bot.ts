@@ -306,7 +306,7 @@ async function setup() {
       () => chatElements.simpleTextCommands.forEach(element => addSimpleTextCommandToMap(element.command, element.text)))
   ]
 
-  await Promise.all(promArray);
+  await Promise.all(promArray).catch(err => handleError(err));
   console.log('All data loaded.')
   await client.connect();
   startIntervals();
@@ -321,8 +321,8 @@ async function setup() {
  * @param {*} def Default value if no matching document found.
  * @returns {Promise<Document>} Promise containing loaded documents.
  */
-async function loadChatElement(model: mongoose.Model<any>, findObj: {}, name: string, loadOne: boolean, def: any = null) {
-  let promise;
+async function loadChatElement<T extends mongoose.Document>(model: mongoose.Model<T>, findObj: {}, name: string, loadOne: boolean, def: any = null) {
+  let promise: Promise<T> | Promise<T[]>;
   if(loadOne) promise = model.findOne(findObj).exec();
   else promise = model.find(findObj).exec();
 
@@ -359,11 +359,10 @@ function createDocument<T extends mongoose.Document>(channel: string, name: stri
  * @param {model} model Model of schema of document to delete.
  * @param {Object} searchObj Search criteria to limit deletion of documents.
  */
-function deleteDocument(channel: string, name: string, model: mongoose.Model<any>, searchObj: {}) {
-  model.deleteOne(searchObj, (err) => {
-    if (err) handleError(err);
-    else client.say(channel, `${name} deleted.`);
-  })
+function deleteDocument<T extends mongoose.Document>(channel: string, name: string, model: mongoose.Model<T>, searchObj: {}) {
+  model.deleteOne(searchObj).exec().then(() => {
+    client.say(channel, `${name} deleted.`);
+  });
 }
 
 /**
@@ -371,18 +370,17 @@ function deleteDocument(channel: string, name: string, model: mongoose.Model<any
  * @param {string} channel The Twitch channel to send any messages to.
  * @param {string} name Name to display in chat message after document updates.
  * @param {Object} obj Object to update.
- * @param {string} [prop] Property on obj to update.
+ * @param {string} [propName] Property on obj to update.
  * @param {*} [newVal] New value to set to prop.
  * @param {string} [msg] Message to display in chat after document updates.
  */
-function updateDocument(channel: string, name: string, obj: mongoose.Document, prop: string, newVal: any, msg: string) {
-  if (prop) obj[prop] = newVal;
+function updateDocument<T extends mongoose.Document>(channel: string, name: string, obj: T, propName: string, newVal: any, msg: string) {
+  if (propName) obj[propName] = newVal;
   if (!msg) msg = `${name} updated.`;
 
-  obj.save((err) => {
-    if (err) handleError(err);
+  obj.save().then(() => {
     client.say(channel, msg);
-  })
+  });
 }
 
 /**
@@ -399,7 +397,8 @@ function handleError(msg: string) {
  * @param {Array} badges Array of badges for a given user in Twitch Chat.
  */
 function isModerator(badges: tmi.Badges) {
-  return badges && (_.has(badges, 'broadcaster') || _.has(badges, 'moderator'));
+  // return badges && (_.has(badges, 'broadcaster') || _.has(badges, 'moderator'));
+  return badges && (badges.broadcaster || badges.moderator)
 }
 
 /**
@@ -434,6 +433,7 @@ function setCounter(args: CommandArguments, counterName: string, count: number =
     let num = 0;
     if (count) num = count;
     else if (args.msgArray.length > 1) num = _.toInteger(args.msgArray[1]);
+    
     if (!_.isInteger(num)) num = 0;
     updateDocument(args.channel, null, chatElements[counterName], 'count', num, `${_.upperFirst(counterName)} set to ${num}.`)
   }

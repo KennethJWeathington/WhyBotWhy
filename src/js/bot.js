@@ -265,7 +265,7 @@ async function setup() {
         loadChatElement(counter_1.default, { name: 'boops' }, 'boops', true),
         loadChatElement(simpletextcommand_1.default, {}, 'simpleTextCommands', false, []).then(() => chatElements.simpleTextCommands.forEach(element => addSimpleTextCommandToMap(element.command, element.text)))
     ];
-    await Promise.all(promArray);
+    await Promise.all(promArray).catch(err => handleError(err));
     console.log('All data loaded.');
     await client.connect();
     startIntervals();
@@ -317,11 +317,8 @@ function createDocument(channel, name, arr, model, createObj) {
  * @param {Object} searchObj Search criteria to limit deletion of documents.
  */
 function deleteDocument(channel, name, model, searchObj) {
-    model.deleteOne(searchObj, (err) => {
-        if (err)
-            handleError(err);
-        else
-            client.say(channel, `${name} deleted.`);
+    model.deleteOne(searchObj).exec().then(() => {
+        client.say(channel, `${name} deleted.`);
     });
 }
 /**
@@ -329,18 +326,16 @@ function deleteDocument(channel, name, model, searchObj) {
  * @param {string} channel The Twitch channel to send any messages to.
  * @param {string} name Name to display in chat message after document updates.
  * @param {Object} obj Object to update.
- * @param {string} [prop] Property on obj to update.
+ * @param {string} [propName] Property on obj to update.
  * @param {*} [newVal] New value to set to prop.
  * @param {string} [msg] Message to display in chat after document updates.
  */
-function updateDocument(channel, name, obj, prop, newVal, msg) {
-    if (prop)
-        obj[prop] = newVal;
+function updateDocument(channel, name, obj, propName, newVal, msg) {
+    if (propName)
+        obj[propName] = newVal;
     if (!msg)
         msg = `${name} updated.`;
-    obj.save((err) => {
-        if (err)
-            handleError(err);
+    obj.save().then(() => {
         client.say(channel, msg);
     });
 }
@@ -357,7 +352,8 @@ function handleError(msg) {
  * @param {Array} badges Array of badges for a given user in Twitch Chat.
  */
 function isModerator(badges) {
-    return badges && (_.has(badges, 'broadcaster') || _.has(badges, 'moderator'));
+    // return badges && (_.has(badges, 'broadcaster') || _.has(badges, 'moderator'));
+    return badges && (badges.broadcaster || badges.moderator);
 }
 /**
  * Create a modified function that will prevent subsequent executions until a timer(cooldown) runs out.
