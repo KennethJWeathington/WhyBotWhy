@@ -180,15 +180,15 @@ function showBoopBoard(args: CommandArguments) {
  * @param {string} msg The message received from a Twitch chat channel.
  * @param {Array} arr An array containing the body of the Twitch message delimited by space.
  */
-function addCommand(args: CommandArguments) {
+async function addCommand(args: CommandArguments) {
   if (isModerator(args.userState.badges) && args.msgArray.length > 2) {
     if (commandMap.has(`!${args.msgArray[1]}`)) client.say(args.channel, 'Command already exists.');
     else {
       const commandText = args.msg.slice(args.msgArray[0].length + args.msgArray[1].length + 2).replace(/\/|\\/g, '');
 
-      createDocument(args.channel, `Command !${args.msgArray[1]}`, chatElements.simpleTextCommands, SimpleTextCommandModel,
-        { command: args.msgArray[1], text: commandText }).then(
-          (result) => addSimpleTextCommandToMap(result.command, result.text));
+      const result = await createDocument(args.channel, `Command !${args.msgArray[1]}`, chatElements.simpleTextCommands, SimpleTextCommandModel,
+        { command: args.msgArray[1], text: commandText });
+      addSimpleTextCommandToMap(result.command, result.text);
     }
   }
 }
@@ -302,11 +302,11 @@ async function setup() {
     loadChatElement(WhyQuoteModel, {}, 'whyQuotes', false, []),
     loadChatElement(CounterModel, { name: 'deaths' }, 'deaths', true),
     loadChatElement(CounterModel, { name: 'boops' }, 'boops', true),
-    loadChatElement(SimpleTextCommandModel, {}, 'simpleTextCommands', false, []).then(
-      () => chatElements.simpleTextCommands.forEach(element => addSimpleTextCommandToMap(element.command, element.text)))
+    loadChatElement(SimpleTextCommandModel, {}, 'simpleTextCommands', false, [])
   ]
 
   await Promise.all(promArray).catch(err => handleError(err));
+  chatElements.simpleTextCommands.forEach(element => addSimpleTextCommandToMap(element.command, element.text));
   console.log('All data loaded.')
   await client.connect();
   startIntervals();
@@ -342,12 +342,12 @@ async function loadChatElement<T extends mongoose.Document>(model: mongoose.Mode
  * @param {Object} createObj Object containing the initial values of the document to be created.
  * @param {Function} afterSaveFunc Callback function to be called after document successfully saves.
  */
-function createDocument<T extends mongoose.Document>(channel: string, name: string, arr: T[], model: mongoose.Model<T>, createObj: {}) {
-  let promise = model.create(createObj).then((result) => {
-    arr.push(result);
-    client.say(channel, `${name} saved!`);
-    return result;
-  });
+async function createDocument<T extends mongoose.Document>(channel: string, name: string, arr: T[], model: mongoose.Model<T>, createObj: {}) {
+  const promise = model.create(createObj);
+  
+  const result = await promise;
+  arr.push(result);
+  client.say(channel, `${name} saved!`);
 
   return promise;
 }
@@ -359,10 +359,9 @@ function createDocument<T extends mongoose.Document>(channel: string, name: stri
  * @param {model} model Model of schema of document to delete.
  * @param {Object} searchObj Search criteria to limit deletion of documents.
  */
-function deleteDocument<T extends mongoose.Document>(channel: string, name: string, model: mongoose.Model<T>, searchObj: {}) {
-  model.deleteOne(searchObj).exec().then(() => {
-    client.say(channel, `${name} deleted.`);
-  });
+async function deleteDocument<T extends mongoose.Document>(channel: string, name: string, model: mongoose.Model<T>, searchObj: {}) {
+  await model.deleteOne(searchObj).exec()
+  client.say(channel, `${name} deleted.`);
 }
 
 /**
@@ -374,13 +373,12 @@ function deleteDocument<T extends mongoose.Document>(channel: string, name: stri
  * @param {*} [newVal] New value to set to prop.
  * @param {string} [msg] Message to display in chat after document updates.
  */
-function updateDocument<T extends mongoose.Document>(channel: string, name: string, obj: T, propName: string, newVal: any, msg: string) {
+async function updateDocument<T extends mongoose.Document>(channel: string, name: string, obj: T, propName: string, newVal: any, msg: string) {
   if (propName) obj[propName] = newVal;
   if (!msg) msg = `${name} updated.`;
 
-  obj.save().then(() => {
-    client.say(channel, msg);
-  });
+  await obj.save();
+  client.say(channel, msg);
 }
 
 /**
@@ -408,7 +406,7 @@ function isModerator(badges: tmi.Badges) {
  * @param {number} timeout Length of the cooldown.
  * @returns {Function} A modified function with a cooldown that prevents rapid execution.
  */
-function createCooldownCommand(thisArg, func: (args: CommandArguments) => void, timeout) {
+function createCooldownCommand(thisArg, func: (args: CommandArguments) => void, timeout: number) {
   let onCooldown = false;
 
   return (args: CommandArguments) => {

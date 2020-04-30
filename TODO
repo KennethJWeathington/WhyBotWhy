@@ -109,10 +109,10 @@ Improvements:
   ✔ Promisify initial load of data and only connect to chat once everything is loaded @done(20-04-20 18:25)
   ☐ DB-drive hard-coded values
   ☐ Make commands objects so more verbose things can be printed with !command
-  ☐ Maybe just make setcounter take a param trackScoreboard instead of a function so increcmentcounter can be refactored
+  ✔ Maybe just make setcounter take a param trackScoreboard instead of a function so increcmentcounter can be refactored @done(20-04-30 04:21)
   ✔ Come up with a better way of creating cooldown functions to allow for more flexibility in params @done(20-04-25 17:08)
   ✔ Filter out mod commands from !commands @done(20-04-20 18:25)
-  ☐ Learn promise-based Mongoose and rewrite callback functions
+  ✔ Learn promise-based Mongoose and rewrite callback functions @done(20-04-30 04:19)
   ✔ Refactor setup so it's abit cleaner and easier to add new promises @done(20-04-23 20:49)
   ☐ Look into other twitch modules
     https://www.npmjs.com/package/twitch
@@ -123,3 +123,6 @@ Improvements:
   ✔ Check for duplicate simpleTextCommands on add @done(20-04-27 19:01)
   ✔ Convert to Typescript @done(20-04-25 17:08)
   ☐ Add unit testing (look into Mocha and Jest)
+  ☐ Look into prettier or airbnb linting
+  ☐ Make all of the commands async??? IS there a reason not to?
+  ☐ Add methods to CommandArguments to make parsing things out of the string easier

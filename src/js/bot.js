@@ -152,13 +152,14 @@ function showBoopBoard(args) {
  * @param {string} msg The message received from a Twitch chat channel.
  * @param {Array} arr An array containing the body of the Twitch message delimited by space.
  */
-function addCommand(args) {
+async function addCommand(args) {
     if (isModerator(args.userState.badges) && args.msgArray.length > 2) {
         if (commandMap.has(`!${args.msgArray[1]}`))
             client.say(args.channel, 'Command already exists.');
         else {
             const commandText = args.msg.slice(args.msgArray[0].length + args.msgArray[1].length + 2).replace(/\/|\\/g, '');
-            createDocument(args.channel, `Command !${args.msgArray[1]}`, chatElements.simpleTextCommands, simpletextcommand_1.default, { command: args.msgArray[1], text: commandText }).then((result) => addSimpleTextCommandToMap(result.command, result.text));
+            const result = await createDocument(args.channel, `Command !${args.msgArray[1]}`, chatElements.simpleTextCommands, simpletextcommand_1.default, { command: args.msgArray[1], text: commandText });
+            addSimpleTextCommandToMap(result.command, result.text);
         }
     }
 }
@@ -263,9 +264,10 @@ async function setup() {
         loadChatElement(whyquote_1.default, {}, 'whyQuotes', false, []),
         loadChatElement(counter_1.default, { name: 'deaths' }, 'deaths', true),
         loadChatElement(counter_1.default, { name: 'boops' }, 'boops', true),
-        loadChatElement(simpletextcommand_1.default, {}, 'simpleTextCommands', false, []).then(() => chatElements.simpleTextCommands.forEach(element => addSimpleTextCommandToMap(element.command, element.text)))
+        loadChatElement(simpletextcommand_1.default, {}, 'simpleTextCommands', false, [])
     ];
     await Promise.all(promArray).catch(err => handleError(err));
+    chatElements.simpleTextCommands.forEach(element => addSimpleTextCommandToMap(element.command, element.text));
     console.log('All data loaded.');
     await client.connect();
     startIntervals();
@@ -301,12 +303,11 @@ async function loadChatElement(model, findObj, name, loadOne, def = null) {
  * @param {Object} createObj Object containing the initial values of the document to be created.
  * @param {Function} afterSaveFunc Callback function to be called after document successfully saves.
  */
-function createDocument(channel, name, arr, model, createObj) {
-    let promise = model.create(createObj).then((result) => {
-        arr.push(result);
-        client.say(channel, `${name} saved!`);
-        return result;
-    });
+async function createDocument(channel, name, arr, model, createObj) {
+    const promise = model.create(createObj);
+    const result = await promise;
+    arr.push(result);
+    client.say(channel, `${name} saved!`);
     return promise;
 }
 /**
@@ -316,10 +317,9 @@ function createDocument(channel, name, arr, model, createObj) {
  * @param {model} model Model of schema of document to delete.
  * @param {Object} searchObj Search criteria to limit deletion of documents.
  */
-function deleteDocument(channel, name, model, searchObj) {
-    model.deleteOne(searchObj).exec().then(() => {
-        client.say(channel, `${name} deleted.`);
-    });
+async function deleteDocument(channel, name, model, searchObj) {
+    await model.deleteOne(searchObj).exec();
+    client.say(channel, `${name} deleted.`);
 }
 /**
  * Updates a property on a document object if specified, then saves the document object.
@@ -330,14 +330,13 @@ function deleteDocument(channel, name, model, searchObj) {
  * @param {*} [newVal] New value to set to prop.
  * @param {string} [msg] Message to display in chat after document updates.
  */
-function updateDocument(channel, name, obj, propName, newVal, msg) {
+async function updateDocument(channel, name, obj, propName, newVal, msg) {
     if (propName)
         obj[propName] = newVal;
     if (!msg)
         msg = `${name} updated.`;
-    obj.save().then(() => {
-        client.say(channel, msg);
-    });
+    await obj.save();
+    client.say(channel, msg);
 }
 /**
  * Handles an error by logging the results in the console.
