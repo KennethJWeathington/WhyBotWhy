@@ -91,9 +91,8 @@ setup();
  */
 function addQuote(args) {
     const quote = args.msg.slice(args.msgArray[0].length + 1);
-    if (quote) {
+    if (quote)
         createDocument(args.channel, 'Quote', chatElements.whyQuotes, whyquote_1.default, { text: quote.replace(/\/|\\/g, ''), user_added: args.userState.username });
-    }
 }
 /**
  * Sends a random WhyQuote to Twitch Chat.
@@ -123,8 +122,7 @@ function incrementBoopCounter(args) {
 function incrementCounter(args, counter, updateMsg, trackScoreboard) {
     counter.count++;
     if (trackScoreboard) {
-        let user = counter.scoreboard.find(x => x.user = args.userState.username);
-        // if (user) user.count = user.count + 1;
+        const user = counter.scoreboard.find(x => x.user = args.userState.username);
         if (user)
             user.count++;
         else
@@ -154,11 +152,12 @@ function showBoopBoard(args) {
  */
 async function addCommand(args) {
     if (isModerator(args.userState.badges) && args.msgArray.length > 2) {
-        if (commandMap.has(`!${args.msgArray[1]}`))
+        const commandKeyword = _.toLower(args.msgArray[1]);
+        if (commandMap.has(`!${commandKeyword}`))
             client.say(args.channel, 'Command already exists.');
         else {
-            const commandText = args.msg.slice(args.msgArray[0].length + args.msgArray[1].length + 2).replace(/\/|\\/g, '');
-            const result = await createDocument(args.channel, `Command !${args.msgArray[1]}`, chatElements.simpleTextCommands, simpletextcommand_1.default, { command: args.msgArray[1], text: commandText });
+            const commandText = args.msg.slice(args.msgArray[0].length + commandKeyword.length + 2).replace(/\/|\\/g, '');
+            const result = await createDocument(args.channel, `Command !${commandKeyword}`, chatElements.simpleTextCommands, simpletextcommand_1.default, { command: commandKeyword, text: commandText });
             addSimpleTextCommandToMap(result.command, result.text);
         }
     }
@@ -171,7 +170,7 @@ async function addCommand(args) {
  */
 function removeCommand(args) {
     if (isModerator(args.userState.badges) && args.msgArray.length > 1) {
-        const removedCommands = _.remove(chatElements.simpleTextCommands, x => x.command === args.msgArray[1]);
+        const removedCommands = _.remove(chatElements.simpleTextCommands, x => x.command === _.toLower(args.msgArray[1]));
         if (removedCommands.length > 0) {
             removedCommands.forEach(element => {
                 const fullCommand = `!${element.command}`;
@@ -228,9 +227,8 @@ function startIntervals() {
  * @param {boolean} self Whether the received message was from this bot or not.
  */
 function onMessageHandler(channel, userState, msg, self) {
-    if (self || userState['message-type'] != 'chat') {
+    if (self || userState['message-type'] != 'chat')
         return;
-    }
     const trimmedMsg = msg.trim();
     const arr = trimmedMsg.split(' ');
     const commandName = _.toLower(arr[0]);
