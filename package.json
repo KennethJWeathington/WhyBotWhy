@@ -4,7 +4,7 @@
   "description": "A twitch chat bot for the channel whytroywhy",
   "main": "bot.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest --coverage",
     "start": "node src/js/bot.js",
     "genmeta": "node src/scripts/gen_metadata.js",
     "ts": "tsc -w"
@@ -20,11 +20,12 @@
     "tmi.js": "^1.5.0"
   },
   "devDependencies": {
-    "@types/request": "^2.48.4",
     "@types/lodash": "^4.14.150",
     "@types/mongoose": "^5.7.13",
     "@types/node": "^13.13.2",
+    "@types/request": "^2.48.4",
     "@types/tmi.js": "^1.4.0",
-    "eslint": "^6.8.0"
+    "eslint": "^6.8.0",
+    "jest": "^26.0.0"
   }
 }
