@@ -1,23 +1,45 @@
 /* eslint-disable no-undef */
 
-describe("Filter function", () => {
-    test("it should filter by a search term (link)", () => {
-      const input = [
-        { id: 1, url: "https://www.url1.dev" },
-        { id: 2, url: "https://www.url2.dev" },
-        { id: 3, url: "https://www.link3.dev" }
-      ];
-  
-      const output = [{ id: 3, url: "https://www.link3.dev" }];
+const mongoose = require('mongoose');
+// import WhyQuoteModel from '../src/js/models/whyquote';
+const WhyQuoteModel = require('../src/js/models/whyquote');
+const whyQuoteData = { text: "Test Quote", user_added: "test", date_added: Date.now() }
 
-      expect(filterByTerm(input, "link")).toEqual(output);  
+describe('Why Quote Model Test', () => {
+
+  beforeAll(async () => {
+    await mongoose.connect(global.__MONGO_URI__, { useNewUrlParser: true, useCreateIndex: true }, (err) => {
+      if (err) {
+        console.error(err);
+        process.exit(1);
+      }
     });
   });
 
-  function filterByTerm(inputArr, searchTerm) {
-    return inputArr.filter(function(arrayElement) {
-      return arrayElement.url.match(searchTerm);
-    });
-  }
+  it('create and save a why quote successfully', async () => {
+    const whyQuote = new WhyQuoteModel(whyQuoteData);
+    const savedWhyQuote = await whyQuote.save();
+
+    expect(savedWhyQuote._id).toBeDefined();
+    expect(savedWhyQuote.text).toBe(whyQuoteData.text);
+    expect(savedWhyQuote.user_added).toBe(whyQuoteData.user_added);
+    expect(savedWhyQuote.date_added.toString()).toBe(new Date(whyQuoteData.date_added).toString());
+  });
+
+  it('create why qoute without required field should fail', async () => {
+    const whyQuote = new WhyQuoteModel({ user_added: "fail" });
+    let err;
+    try {
+      const whyQuoteWithoutRequiredField = await whyQuote.save();
+      err = whyQuoteWithoutRequiredField;
+    } catch (error) {
+      err = error;
+    }
+
+    expect(err).toBeInstanceOf(mongoose.Error.ValidationError);
+    expect(err.errors.text).toBeDefined();
+  });
+
+});
 
   //https://medium.com/javascript-in-plain-english/how-i-setup-unit-test-for-mongodb-using-jest-mongoose-103b772ee164
