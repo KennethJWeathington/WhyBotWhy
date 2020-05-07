@@ -1,7 +1,6 @@
 /* eslint-disable no-undef */
 
 const mongoose = require('mongoose');
-// import WhyQuoteModel from '../src/js/models/whyquote';
 const WhyQuoteModel = require('../src/js/models/whyquote');
 const whyQuoteData = { text: "Test Quote", user_added: "test", date_added: Date.now() }
 
@@ -17,7 +16,7 @@ describe('Why Quote Model Test', () => {
   });
 
   it('create and save a why quote successfully', async () => {
-    const whyQuote = new WhyQuoteModel(whyQuoteData);
+    const whyQuote = new WhyQuoteModel.default(whyQuoteData);
     const savedWhyQuote = await whyQuote.save();
 
     expect(savedWhyQuote._id).toBeDefined();
@@ -26,8 +25,8 @@ describe('Why Quote Model Test', () => {
     expect(savedWhyQuote.date_added.toString()).toBe(new Date(whyQuoteData.date_added).toString());
   });
 
-  it('create why qoute without required field should fail', async () => {
-    const whyQuote = new WhyQuoteModel({ user_added: "fail" });
+  it('create why quote without required field should fail', async () => {
+    const whyQuote = new WhyQuoteModel.default({ user_added: "fail" });
     let err;
     try {
       const whyQuoteWithoutRequiredField = await whyQuote.save();
@@ -40,6 +39,9 @@ describe('Why Quote Model Test', () => {
     expect(err.errors.text).toBeDefined();
   });
 
+  afterAll(() => {
+    mongoose.disconnect();
+  });
 });
 
   //https://medium.com/javascript-in-plain-english/how-i-setup-unit-test-for-mongodb-using-jest-mongoose-103b772ee164

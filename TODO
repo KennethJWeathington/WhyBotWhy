@@ -126,4 +126,12 @@ Improvements:
   ☐ Look into prettier or airbnb linting
   ☐ Make all of the commands async??? IS there a reason not to?
   ☐ Add methods to CommandArguments to make parsing things out of the string easier
-  ☐ Change import back to require because Jest is slow
+  ☐ Look at implementing ES2020 features through TS
+  ☐ Refactor into different modules to aid in testing
+    Maybe make commandmap it's own module that executes a command 
+    and returns a promise that resolves to an array of messages to send to the client
+    factor out tmi settings json
+    factor out connection to chat server
+    make third module that goes handles the interaction between commandmap and client
+  ☐ Shift out command from command arguments
+  ☐ Factor out Chatelements, it's not needed any more
