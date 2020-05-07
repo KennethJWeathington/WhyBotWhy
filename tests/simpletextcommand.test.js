@@ -1,22 +1,27 @@
 /* eslint-disable no-undef */
 
-const mongoose = require('mongoose');
-const SimpleTextCommandModel = require('../src/js/models/simpletextcommand');
-const simpleTextCommandData = { command: "!test", text: "Test text" }
+const mongoose = require("mongoose");
+const SimpleTextCommandModel = require("../src/js/models/simpletextcommand");
+const simpleTextCommandData = { command: "!test", text: "Test text" };
 
-describe('Simple Text Command Test', () => {
-
+describe("Simple Text Command Test", () => {
   beforeAll(async () => {
-    await mongoose.connect(global.__MONGO_URI__, { useNewUrlParser: true, useCreateIndex: true }, (err) => {
-      if (err) {
-        console.error(err);
-        process.exit(1);
+    await mongoose.connect(
+      global.__MONGO_URI__,
+      { useNewUrlParser: true, useCreateIndex: true },
+      (err) => {
+        if (err) {
+          console.error(err);
+          process.exit(1);
+        }
       }
-    });
+    );
   });
 
-  it('create and save a simple text command successfully', async () => {
-    const simpleTextCommand = new SimpleTextCommandModel.default(simpleTextCommandData);
+  it("create and save a simple text command successfully", async () => {
+    const simpleTextCommand = new SimpleTextCommandModel.default(
+      simpleTextCommandData
+    );
     const savedSimpleTextCommand = await simpleTextCommand.save();
 
     expect(savedSimpleTextCommand._id).toBeDefined();
@@ -24,8 +29,10 @@ describe('Simple Text Command Test', () => {
     expect(savedSimpleTextCommand.text).toBe(simpleTextCommandData.text);
   });
 
-  it('create simple text command without required field command should fail', async () => {
-    const simpleTextCommand = new SimpleTextCommandModel.default({ text: "fail" });
+  it("create simple text command without required field command should fail", async () => {
+    const simpleTextCommand = new SimpleTextCommandModel.default({
+      text: "fail",
+    });
     let err;
     try {
       const simpleTextCommandWithoutRequiredField = await simpleTextCommand.save();
@@ -38,8 +45,10 @@ describe('Simple Text Command Test', () => {
     expect(err.errors.command).toBeDefined();
   });
 
-  it('create simple text command without required field text should fail', async () => {
-    const simpleTextCommand = new SimpleTextCommandModel.default({ command: "fail" });
+  it("create simple text command without required field text should fail", async () => {
+    const simpleTextCommand = new SimpleTextCommandModel.default({
+      command: "fail",
+    });
     let err;
     try {
       const simpleTextCommandWithoutRequiredField = await simpleTextCommand.save();
@@ -57,4 +66,4 @@ describe('Simple Text Command Test', () => {
   });
 });
 
-  //https://medium.com/javascript-in-plain-english/how-i-setup-unit-test-for-mongodb-using-jest-mongoose-103b772ee164
+//https://medium.com/javascript-in-plain-english/how-i-setup-unit-test-for-mongodb-using-jest-mongoose-103b772ee164

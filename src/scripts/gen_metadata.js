@@ -1,12 +1,12 @@
 //#region setup
 
-require('dotenv').config()
+require("dotenv").config();
 
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 const mongoDB = process.env.DB_CONN_STRING;
 mongoose.connect(mongoDB, { useNewUrlParser: true });
 const db = mongoose.connection;
-db.on('error', console.error.bind(console, 'MongoDB connection error:'));
+db.on("error", console.error.bind(console, "MongoDB connection error:"));
 
 //#endregion setup
 
@@ -14,19 +14,22 @@ db.on('error', console.error.bind(console, 'MongoDB connection error:'));
 
 const promises = [];
 
-const CounterModel = require('../models/counter');
-const counterArr = ['deaths', 'boops']
+const CounterModel = require("../models/counter");
+const counterArr = ["deaths", "boops"];
 for (let i = 0; i < counterArr.length; i++) {
-  const modelPromise = createModelIfNotExist(counterArr[i], CounterModel,
-    { name: counterArr[i] }, { name: counterArr[i], count: 0, scoreboard: [] });
+  const modelPromise = createModelIfNotExist(
+    counterArr[i],
+    CounterModel,
+    { name: counterArr[i] },
+    { name: counterArr[i], count: 0, scoreboard: [] }
+  );
   promises.push(modelPromise);
 }
 
 Promise.all(promises).then(() => {
-  console.log("Loading done.")
+  console.log("Loading done.");
   mongoose.disconnect().then(() => console.log("Disconnected from DB."));
 });
-
 
 //#endregion metadata creation
 
@@ -39,7 +42,7 @@ function createModelIfNotExist(name, model, srchObj, createObj) {
       if (err) reject(err);
       else resolve();
     });
-  })
+  });
 }
 
 function createModelCallback(err, result, name, createObj) {
@@ -53,14 +56,13 @@ function createModelCallback(err, result, name, createObj) {
       else {
         console.log(succ_msg);
       }
-    })
-  } else console.log(`${name} already exists.`)
+    });
+  } else console.log(`${name} already exists.`);
 }
 
 function handleError(msg) {
   console.log(msg);
   return;
 }
-
 
 //#endregion helper functions

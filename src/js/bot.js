@@ -2,47 +2,29 @@
 //#region Imports
 Object.defineProperty(exports, "__esModule", { value: true });
 const dotenv = require("dotenv");
-const tmi = require("tmi.js");
+dotenv.config();
 const _ = require("lodash");
 const mongoose = require("mongoose");
 const request = require("request");
 const whyquote_1 = require("./models/whyquote");
 const counter_1 = require("./models/counter");
 const simpletextcommand_1 = require("./models/simpletextcommand");
-dotenv.config();
+const chatClient_1 = require("./chatClient");
 //#endregion Imports
 //#region Mongoose
 const mongoDB = process.env.DB_CONN_STRING;
 mongoose.connect(mongoDB, { useNewUrlParser: true });
 const db = mongoose.connection;
-db.on('error', console.error.bind(console, 'MongoDB connection error:'));
+db.on("error", console.error.bind(console, "MongoDB connection error:"));
 //#endregion Mongoose
 //#region Environment Variable Parsing
-const showDebug = _.toLower(process.env.SHOW_IRC_DEBUG_INFO) === 'true';
 const cooldown = Number.parseInt(process.env.COMMAND_TIMEOUT);
 const rulesInterval = Number.parseInt(process.env.RULES_TIMEOUT);
 //#endregion Environment Variable Parsing
 //#region tmi.js
-const opts = {
-    identity: {
-        username: process.env.BOT_USERNAME,
-        password: process.env.OAUTH_TOKEN
-    },
-    channels: [
-        process.env.CHANNEL_NAME
-    ],
-    connection: {
-        reconnect: true,
-        secure: true
-    },
-    options: {
-        debug: showDebug
-    }
-};
-const client = tmi.client(opts);
-client.on('message', onMessageHandler);
-client.on('subscription', onSubscriptionHandler);
-client.on('connected', onConnectedHandler);
+chatClient_1.default.on("message", onMessageHandler);
+chatClient_1.default.on("subscription", onSubscriptionHandler);
+chatClient_1.default.on("connected", onConnectedHandler);
 //#endregion tmi.js
 //#region Class Declarations
 class ChatElements {
@@ -67,18 +49,18 @@ const chatElements = new ChatElements();
 const cooldownDeathCounter = createCooldownCommand(this, incrementDeathCounter, cooldown);
 const cooldownBoopCounter = createCooldownCommand(this, incrementBoopCounter, cooldown);
 const commandMap = new Map();
-commandMap.set('!whyme', new Command((args) => client.say(args.channel, `Why @${args.userState.username}, why???`), false));
-commandMap.set('!addquote', new Command(addQuote, false));
-commandMap.set('!quote', new Command(getQuote, false));
-commandMap.set('!death', new Command(cooldownDeathCounter, false));
-commandMap.set('!setdeaths', new Command((args) => setCounter(args, 'deaths'), true));
-commandMap.set('!boop', new Command(cooldownBoopCounter, false));
-commandMap.set('!boopboard', new Command(showBoopBoard, false));
-commandMap.set('!addcommand', new Command(addCommand, true));
-commandMap.set('!removecommand', new Command(removeCommand, true));
-commandMap.set('!rules', new Command(showRules, false));
-commandMap.set('!commands', new Command(showCommands, false));
-commandMap.set('!followage', new Command(showFollowage, false));
+commandMap.set("!whyme", new Command((args) => chatClient_1.default.say(args.channel, `Why @${args.userState.username}, why???`), false));
+commandMap.set("!addquote", new Command(addQuote, false));
+commandMap.set("!quote", new Command(getQuote, false));
+commandMap.set("!death", new Command(cooldownDeathCounter, false));
+commandMap.set("!setdeaths", new Command((args) => setCounter(args, "deaths"), true));
+commandMap.set("!boop", new Command(cooldownBoopCounter, false));
+commandMap.set("!boopboard", new Command(showBoopBoard, false));
+commandMap.set("!addcommand", new Command(addCommand, true));
+commandMap.set("!removecommand", new Command(removeCommand, true));
+commandMap.set("!rules", new Command(showRules, false));
+commandMap.set("!commands", new Command(showCommands, false));
+commandMap.set("!followage", new Command(showFollowage, false));
 setup();
 //#endregion Chat interaction
 //#region Command functions
@@ -92,7 +74,7 @@ setup();
 function addQuote(args) {
     const quote = args.msg.slice(args.msgArray[0].length + 1);
     if (quote)
-        createDocument(args.channel, 'Quote', chatElements.whyQuotes, whyquote_1.default, { text: quote.replace(/\/|\\/g, ''), user_added: args.userState.username });
+        createDocument(args.channel, "Quote", chatElements.whyQuotes, whyquote_1.default, { text: quote.replace(/\/|\\/g, ""), user_added: args.userState.username });
 }
 /**
  * Sends a random WhyQuote to Twitch Chat.
@@ -102,7 +84,7 @@ function getQuote(args) {
     if (chatElements.whyQuotes.length > 0) {
         const quoteIndex = Math.floor(Math.random() * chatElements.whyQuotes.length);
         const quote = chatElements.whyQuotes[quoteIndex];
-        client.say(args.channel, `"${quote.text}" - Added by @${quote.user_added} on ${quote.date_added.toLocaleDateString()}`);
+        chatClient_1.default.say(args.channel, `"${quote.text}" - Added by @${quote.user_added} on ${quote.date_added.toLocaleDateString()}`);
     }
 }
 /**
@@ -122,26 +104,27 @@ function incrementBoopCounter(args) {
 function incrementCounter(args, counter, updateMsg, trackScoreboard) {
     counter.count++;
     if (trackScoreboard) {
-        const user = counter.scoreboard.find(x => x.user = args.userState.username);
+        const user = counter.scoreboard.find((x) => (x.user = args.userState.username));
         if (user)
             user.count++;
         else
             counter.scoreboard.push(new counter_1.CounterScoreboard(args.userState.username, 1));
         counter.scoreboard = counter.scoreboard.sort((a, b) => b.count - a.count);
     }
-    updateDocument(args.channel, null, counter, null, null, updateMsg.replace('{count}', counter.count.toString()));
+    updateDocument(args.channel, null, counter, null, null, updateMsg.replace("{count}", counter.count.toString()));
 }
 /**
  * Assembles the boop leaderboard showing the users with the top 3 boop counts and sends a message with the results to Twitch Chat.
  * @param {string} channel The Twitch channel to send any messages to.
  */
 function showBoopBoard(args) {
-    let scoreboardMessage = 'Top Boopers:';
+    let scoreboardMessage = "Top Boopers:";
     for (let i = 0; i < chatElements.boops.scoreboard.length && i < 3; i++) {
         const score = chatElements.boops.scoreboard[i];
-        scoreboardMessage = scoreboardMessage + ` ${i + 1}. @${score.user}: ${score.count} boops,`;
+        scoreboardMessage =
+            scoreboardMessage + ` ${i + 1}. @${score.user}: ${score.count} boops,`;
     }
-    client.say(args.channel, _.trimEnd(scoreboardMessage, ','));
+    chatClient_1.default.say(args.channel, _.trimEnd(scoreboardMessage, ","));
 }
 /**
  * Adds a command to the SimpleTextCommand collection.
@@ -154,9 +137,11 @@ async function addCommand(args) {
     if (isModerator(args.userState.badges) && args.msgArray.length > 2) {
         const commandKeyword = _.toLower(args.msgArray[1]);
         if (commandMap.has(`!${commandKeyword}`))
-            client.say(args.channel, 'Command already exists.');
+            chatClient_1.default.say(args.channel, "Command already exists.");
         else {
-            const commandText = args.msg.slice(args.msgArray[0].length + commandKeyword.length + 2).replace(/\/|\\/g, '');
+            const commandText = args.msg
+                .slice(args.msgArray[0].length + commandKeyword.length + 2)
+                .replace(/\/|\\/g, "");
             const result = await createDocument(args.channel, `Command !${commandKeyword}`, chatElements.simpleTextCommands, simpletextcommand_1.default, { command: commandKeyword, text: commandText });
             addSimpleTextCommandToMap(result.command, result.text);
         }
@@ -170,16 +155,16 @@ async function addCommand(args) {
  */
 function removeCommand(args) {
     if (isModerator(args.userState.badges) && args.msgArray.length > 1) {
-        const removedCommands = _.remove(chatElements.simpleTextCommands, x => x.command === _.toLower(args.msgArray[1]));
+        const removedCommands = _.remove(chatElements.simpleTextCommands, (x) => x.command === _.toLower(args.msgArray[1]));
         if (removedCommands.length > 0) {
-            removedCommands.forEach(element => {
+            removedCommands.forEach((element) => {
                 const fullCommand = `!${element.command}`;
                 commandMap.delete(fullCommand);
                 deleteDocument(args.channel, `Command ${fullCommand}`, simpletextcommand_1.default, { command: element.command });
             });
         }
         else {
-            client.say(args.channel, 'Command not found.');
+            chatClient_1.default.say(args.channel, "Command not found.");
         }
     }
 }
@@ -188,17 +173,19 @@ function removeCommand(args) {
  * @param {string} channel The Twitch channel to send any messages to.
  */
 function showRules(args) {
-    client.say(args.channel, process.env.RULES_COMMAND_TEXT);
+    chatClient_1.default.say(args.channel, process.env.RULES_COMMAND_TEXT);
 }
 /**
  * Sends a message containing non-moderator commands into Twitch Chat.
  * @param {string} channel The Twitch channel to send any messages to.
  */
 function showCommands(args) {
-    let commandMsg = 'Commands: ';
-    commandMap.forEach((value, key) => { if (!value.mod_required)
-        commandMsg += `${key} `; });
-    client.say(args.channel, _.trimEnd(commandMsg));
+    let commandMsg = "Commands: ";
+    commandMap.forEach((value, key) => {
+        if (!value.mod_required)
+            commandMsg += `${key} `;
+    });
+    chatClient_1.default.say(args.channel, _.trimEnd(commandMsg));
 }
 /**
  * Sends a message in Twitch Chat which contains how long the user has been following the channel.
@@ -210,12 +197,13 @@ function showFollowage(args) {
         if (error)
             handleError(error);
         if (response && response.statusCode === 200)
-            client.say(args.channel, `@${body}`);
+            chatClient_1.default.say(args.channel, `@${body}`);
     });
 }
 function startIntervals() {
     const rulesIntervals = [];
-    opts.channels.forEach(channel => rulesIntervals.push(setInterval(showRules, rulesInterval, { channel })));
+    const channels = chatClient_1.default.getChannels();
+    channels.forEach((channel) => rulesIntervals.push(setInterval(showRules, rulesInterval, { channel })));
 }
 //#endregion Command functions
 //#region Event Handlers
@@ -227,10 +215,10 @@ function startIntervals() {
  * @param {boolean} self Whether the received message was from this bot or not.
  */
 function onMessageHandler(channel, userState, msg, self) {
-    if (self || userState['message-type'] != 'chat')
+    if (self || userState["message-type"] != "chat")
         return;
     const trimmedMsg = msg.trim();
-    const arr = trimmedMsg.split(' ');
+    const arr = trimmedMsg.split(" ");
     const commandName = _.toLower(arr[0]);
     const commandElement = commandMap.get(commandName);
     if (commandElement)
@@ -242,7 +230,7 @@ function onMessageHandler(channel, userState, msg, self) {
  * @param {string} username The username of the subscriber.
  */
 function onSubscriptionHandler(channel, username) {
-    client.say(channel, `Thank you for the subscription @${username}! Enjoy your stay.`);
+    chatClient_1.default.say(channel, `Thank you for the subscription @${username}! Enjoy your stay.`);
 }
 /**
  * Handler for onConnected event of connection to Twitch Chat. Used to confirm connection.
@@ -259,15 +247,15 @@ function onConnectedHandler(addr, port) {
  */
 async function setup() {
     const promArray = [
-        loadChatElement(whyquote_1.default, {}, 'whyQuotes', false, []),
-        loadChatElement(counter_1.default, { name: 'deaths' }, 'deaths', true),
-        loadChatElement(counter_1.default, { name: 'boops' }, 'boops', true),
-        loadChatElement(simpletextcommand_1.default, {}, 'simpleTextCommands', false, [])
+        loadChatElement(whyquote_1.default, {}, "whyQuotes", false, []),
+        loadChatElement(counter_1.default, { name: "deaths" }, "deaths", true),
+        loadChatElement(counter_1.default, { name: "boops" }, "boops", true),
+        loadChatElement(simpletextcommand_1.default, {}, "simpleTextCommands", false, []),
     ];
-    await Promise.all(promArray).catch(err => handleError(err));
-    chatElements.simpleTextCommands.forEach(element => addSimpleTextCommandToMap(element.command, element.text));
-    console.log('All data loaded.');
-    await client.connect();
+    await Promise.all(promArray).catch((err) => handleError(err));
+    chatElements.simpleTextCommands.forEach((element) => addSimpleTextCommandToMap(element.command, element.text));
+    console.log("All data loaded.");
+    await chatClient_1.default.connect();
     startIntervals();
 }
 /**
@@ -305,7 +293,7 @@ async function createDocument(channel, name, arr, model, createObj) {
     const promise = model.create(createObj);
     const result = await promise;
     arr.push(result);
-    client.say(channel, `${name} saved!`);
+    chatClient_1.default.say(channel, `${name} saved!`);
     return promise;
 }
 /**
@@ -317,7 +305,7 @@ async function createDocument(channel, name, arr, model, createObj) {
  */
 async function deleteDocument(channel, name, model, searchObj) {
     await model.deleteOne(searchObj).exec();
-    client.say(channel, `${name} deleted.`);
+    chatClient_1.default.say(channel, `${name} deleted.`);
 }
 /**
  * Updates a property on a document object if specified, then saves the document object.
@@ -334,7 +322,7 @@ async function updateDocument(channel, name, obj, propName, newVal, msg) {
     if (!msg)
         msg = `${name} updated.`;
     await obj.save();
-    client.say(channel, msg);
+    chatClient_1.default.say(channel, msg);
 }
 /**
  * Handles an error by logging the results in the console.
@@ -349,7 +337,6 @@ function handleError(msg) {
  * @param {Array} badges Array of badges for a given user in Twitch Chat.
  */
 function isModerator(badges) {
-    // return badges && (_.has(badges, 'broadcaster') || _.has(badges, 'moderator'));
     return badges && (badges.broadcaster || badges.moderator);
 }
 /**
@@ -365,7 +352,7 @@ function createCooldownCommand(thisArg, func, timeout) {
         if (!onCooldown) {
             func.call(thisArg, args);
             onCooldown = true;
-            setTimeout(() => onCooldown = false, timeout);
+            setTimeout(() => (onCooldown = false), timeout);
         }
     };
 }
@@ -386,7 +373,7 @@ function setCounter(args, counterName, count = NaN) {
             num = _.toInteger(args.msgArray[1]);
         if (!_.isInteger(num))
             num = 0;
-        updateDocument(args.channel, null, chatElements[counterName], 'count', num, `${_.upperFirst(counterName)} set to ${num}.`);
+        updateDocument(args.channel, null, chatElements[counterName], "count", num, `${_.upperFirst(counterName)} set to ${num}.`);
     }
 }
 /**
@@ -395,6 +382,6 @@ function setCounter(args, counterName, count = NaN) {
  * @param {string} text The text that will display with the command is invoked.
  */
 function addSimpleTextCommandToMap(command, text) {
-    commandMap.set('!' + command, new Command((args) => client.say(args.channel, text), false));
+    commandMap.set("!" + command, new Command((args) => chatClient_1.default.say(args.channel, text), false));
 }
 //#endregion Helper Functions

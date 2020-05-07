@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 const CounterSchema = new mongoose.Schema({
     name: { type: String, required: true, max: 100 },
     count: { type: Number, required: true, default: 0 },
-    scoreboard: [{ user: String, count: Number }]
+    scoreboard: [{ user: String, count: Number }],
 });
 class CounterScoreboard {
     constructor(user, count) {
@@ -15,4 +15,4 @@ class CounterScoreboard {
     }
 }
 exports.CounterScoreboard = CounterScoreboard;
-exports.default = mongoose.model('Counter', CounterSchema);
+exports.default = mongoose.model("Counter", CounterSchema);
