@@ -1,4 +1,4 @@
-import * as mongoose from "mongoose";
+import * as mongoose from 'mongoose';
 
 const SimpleTextCommandSchema = new mongoose.Schema({
   command: { type: String, required: true, max: 100 },
@@ -11,6 +11,6 @@ export interface ISimpleTextCommand extends mongoose.Document {
 }
 
 export default mongoose.model<ISimpleTextCommand>(
-  "SimpleTextCommand",
+  'SimpleTextCommand',
   SimpleTextCommandSchema
 );

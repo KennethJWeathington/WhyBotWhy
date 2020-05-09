@@ -1,4 +1,4 @@
-import * as mongoose from "mongoose";
+import * as mongoose from 'mongoose';
 
 const CounterSchema = new mongoose.Schema({
   name: { type: String, required: true, max: 100 },
@@ -19,4 +19,4 @@ export interface ICounter extends mongoose.Document {
   scoreboard: CounterScoreboard[];
 }
 
-export default mongoose.model<ICounter>("Counter", CounterSchema);
+export default mongoose.model<ICounter>('Counter', CounterSchema);

@@ -1,7 +1,7 @@
-import * as tmi from "tmi.js";
+import { Client, Options, client, Userstate } from 'tmi.js';
 
-const showDebug = process.env.SHOW_IRC_DEBUG_INFO.toLowerCase() === "true";
-const opts: tmi.Options = {
+const showDebug = process.env.SHOW_IRC_DEBUG_INFO.toLowerCase() === 'true';
+const opts: Options = {
   identity: {
     username: process.env.BOT_USERNAME,
     password: process.env.OAUTH_TOKEN,
@@ -16,6 +16,6 @@ const opts: tmi.Options = {
   },
 };
 
-const chatClient: tmi.Client = tmi.client(opts);
+const chatClient: Client = client(opts);
 
-export default chatClient;
+export { chatClient, Userstate };

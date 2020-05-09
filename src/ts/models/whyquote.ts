@@ -1,4 +1,4 @@
-import * as mongoose from "mongoose";
+import * as mongoose from 'mongoose';
 
 const WhyQuoteSchema = new mongoose.Schema({
   text: { type: String, required: true, max: 100 },
@@ -12,4 +12,4 @@ export interface IWhyQuote extends mongoose.Document {
   date_added: Date;
 }
 
-export default mongoose.model<IWhyQuote>("WhyQuote", WhyQuoteSchema);
+export default mongoose.model<IWhyQuote>('WhyQuote', WhyQuoteSchema);
