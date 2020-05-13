@@ -7,12 +7,6 @@ import { commandMap, CommandArguments } from './commandMap';
 
 //#endregion Imports
 
-//#region Environment Variable Parsing
-
-const rulesInterval = Number.parseInt(process.env.RULES_TIMEOUT);
-
-//#endregion Environment Variable Parsing
-
 //#region tmi.js
 
 chatClient.on('message', onMessageHandler);
@@ -121,29 +115,6 @@ function handleError(msg: string) {
  */
 function isModerator(badges: tmi.Badges) {
   return badges && (badges.broadcaster || badges.moderator);
-}
-
-/**
- * Create a modified function that will prevent subsequent executions until a timer(cooldown) runs out.
- * @param {this} thisArg Context to execute the function in.
- * @param {Function} func Function to execute on a cooldown.
- * @param {number} timeout Length of the cooldown.
- * @returns {Function} A modified function with a cooldown that prevents rapid execution.
- */
-function createCooldownCommand(
-  thisArg,
-  func: (args: CommandArguments) => void,
-  timeout: number
-) {
-  let onCooldown = false;
-
-  return (args: CommandArguments) => {
-    if (!onCooldown) {
-      func.call(thisArg, args);
-      onCooldown = true;
-      setTimeout(() => (onCooldown = false), timeout);
-    }
-  };
 }
 
 //#endregion Helper Functions

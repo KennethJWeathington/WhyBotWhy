@@ -14,6 +14,7 @@ import {
 import * as request from 'request';
 
 const cooldown = Number.parseInt(process.env.COMMAND_TIMEOUT);
+const rulesInterval = Number.parseInt(process.env.RULES_TIMEOUT);
 
 class CommandArguments {
   constructor(
@@ -338,6 +339,29 @@ function addSimpleTextCommandToMap(command: string, text: string) {
       false
     )
   );
+}
+
+/**
+ * Create a modified function that will prevent subsequent executions until a timer(cooldown) runs out.
+ * @param {this} thisArg Context to execute the function in.
+ * @param {Function} func Function to execute on a cooldown.
+ * @param {number} timeout Length of the cooldown.
+ * @returns {Function} A modified function with a cooldown that prevents rapid execution.
+ */
+function createCooldownCommand(
+  thisArg,
+  func: (args: CommandArguments) => void,
+  timeout: number
+) {
+  let onCooldown = false;
+
+  return (args: CommandArguments) => {
+    if (!onCooldown) {
+      func.call(thisArg, args);
+      onCooldown = true;
+      setTimeout(() => (onCooldown = false), timeout);
+    }
+  };
 }
 
 export { commandMap, CommandArguments };

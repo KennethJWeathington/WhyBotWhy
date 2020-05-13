@@ -7,6 +7,7 @@ const _ = require("lodash");
 const databaseHelper_1 = require("./databaseHelper");
 const request = require("request");
 const cooldown = Number.parseInt(process.env.COMMAND_TIMEOUT);
+const rulesInterval = Number.parseInt(process.env.RULES_TIMEOUT);
 class CommandArguments {
     constructor(channel, userName, msg, msgArray, isModerator) {
         this.channel = channel;
@@ -212,4 +213,21 @@ function setCounter(args, counterName, count = NaN) {
  */
 function addSimpleTextCommandToMap(command, text) {
     commandMap.set('!' + command, new Command((args) => chatClient.say(args.channel, text), false));
+}
+/**
+ * Create a modified function that will prevent subsequent executions until a timer(cooldown) runs out.
+ * @param {this} thisArg Context to execute the function in.
+ * @param {Function} func Function to execute on a cooldown.
+ * @param {number} timeout Length of the cooldown.
+ * @returns {Function} A modified function with a cooldown that prevents rapid execution.
+ */
+function createCooldownCommand(thisArg, func, timeout) {
+    let onCooldown = false;
+    return (args) => {
+        if (!onCooldown) {
+            func.call(thisArg, args);
+            onCooldown = true;
+            setTimeout(() => (onCooldown = false), timeout);
+        }
+    };
 }

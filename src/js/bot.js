@@ -6,9 +6,6 @@ dotenv_1.config();
 const chatClient_1 = require("./chatClient");
 const commandMap_1 = require("./commandMap");
 //#endregion Imports
-//#region Environment Variable Parsing
-const rulesInterval = Number.parseInt(process.env.RULES_TIMEOUT);
-//#endregion Environment Variable Parsing
 //#region tmi.js
 chatClient_1.chatClient.on('message', onMessageHandler);
 chatClient_1.chatClient.on('subscription', onSubscriptionHandler);
@@ -83,22 +80,5 @@ function handleError(msg) {
  */
 function isModerator(badges) {
     return badges && (badges.broadcaster || badges.moderator);
-}
-/**
- * Create a modified function that will prevent subsequent executions until a timer(cooldown) runs out.
- * @param {this} thisArg Context to execute the function in.
- * @param {Function} func Function to execute on a cooldown.
- * @param {number} timeout Length of the cooldown.
- * @returns {Function} A modified function with a cooldown that prevents rapid execution.
- */
-function createCooldownCommand(thisArg, func, timeout) {
-    let onCooldown = false;
-    return (args) => {
-        if (!onCooldown) {
-            func.call(thisArg, args);
-            onCooldown = true;
-            setTimeout(() => (onCooldown = false), timeout);
-        }
-    };
 }
 //#endregion Helper Functions

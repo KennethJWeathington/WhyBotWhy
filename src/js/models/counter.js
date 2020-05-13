@@ -15,4 +15,4 @@ class CounterScoreboard {
     }
 }
 exports.CounterScoreboard = CounterScoreboard;
-exports.default = mongoose.model("Counter", CounterSchema);
+exports.default = mongoose.model('Counter', CounterSchema);

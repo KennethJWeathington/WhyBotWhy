@@ -6,4 +6,4 @@ const WhyQuoteSchema = new mongoose.Schema({
     user_added: String,
     date_added: { type: Date, default: Date.now() },
 });
-exports.default = mongoose.model("WhyQuote", WhyQuoteSchema);
+exports.default = mongoose.model('WhyQuote', WhyQuoteSchema);
