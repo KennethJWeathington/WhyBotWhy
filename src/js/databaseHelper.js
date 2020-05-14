@@ -39,11 +39,8 @@ exports.loadDocument = loadDocument;
  * @param {Object} createObj Object containing the initial values of the document to be created.
  * @param {Function} afterSaveFunc Callback function to be called after document successfully saves.
  */
-async function createDocument(channel, name, arr, model, createObj) {
+async function createDocument(model, createObj) {
     const promise = model.create(createObj);
-    const result = await promise;
-    arr.push(result);
-    chatClient.say(channel, `${name} saved!`);
     return promise;
 }
 exports.createDocument = createDocument;
@@ -54,9 +51,8 @@ exports.createDocument = createDocument;
  * @param {model} model Model of schema of document to delete.
  * @param {Object} searchObj Search criteria to limit deletion of documents.
  */
-async function deleteDocument(channel, name, model, searchObj) {
-    await model.deleteOne(searchObj).exec();
-    chatClient.say(channel, `${name} deleted.`);
+async function deleteDocument(model, searchObj) {
+    return model.deleteOne(searchObj).exec();
 }
 exports.deleteDocument = deleteDocument;
 /**
@@ -68,12 +64,7 @@ exports.deleteDocument = deleteDocument;
  * @param {*} [newVal] New value to set to prop.
  * @param {string} [msg] Message to display in chat after document updates.
  */
-async function updateDocument(channel, name, obj, propName, newVal, msg) {
-    if (propName)
-        obj[propName] = newVal;
-    if (!msg)
-        msg = `${name} updated.`;
-    await obj.save();
-    chatClient.say(channel, msg);
+async function updateDocument(obj) {
+    return obj.save();
 }
 exports.updateDocument = updateDocument;

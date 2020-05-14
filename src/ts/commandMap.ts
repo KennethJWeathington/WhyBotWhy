@@ -28,7 +28,7 @@ class CommandArguments {
 
 class Command {
   constructor(
-    public command: (args: CommandArguments) => void,
+    public command: (args: CommandArguments) => string,
     public mod_required: boolean
   ) {}
 }
@@ -57,17 +57,19 @@ const commandMap = new Map<string, Command>();
 commandMap.set(
   '!whyme',
   new Command(
-    (args: CommandArguments) =>
-      chatClient.say(args.channel, `Why @${args.userState.username}, why???`),
+    (args: CommandArguments) => `Why @${args.userName}, why???`,
     false
   )
 );
 commandMap.set('!addquote', new Command(addQuote, false));
-commandMap.set('!quote', new Command(getQuote, false));
+commandMap.set('!quote', new Command(getRandomQuote, false));
 commandMap.set('!death', new Command(cooldownDeathCounter, false));
 commandMap.set(
   '!setdeaths',
-  new Command((args: CommandArguments) => setCounter(args, 'deaths'), true)
+  new Command(
+    (args: CommandArguments) => setCounter(args, chatElements.deaths),
+    true
+  )
 );
 commandMap.set('!boop', new Command(cooldownBoopCounter, false));
 commandMap.set('!boopboard', new Command(showBoopBoard, false));
@@ -88,33 +90,27 @@ commandMap.set('!followage', new Command(showFollowage, false));
  */
 function addQuote(args: CommandArguments) {
   const quote = args.msg.slice(args.msgArray[0].length + 1);
-  if (quote)
-    createDocument(
-      args.channel,
-      'Quote',
-      chatElements.whyQuotes,
-      WhyQuoteModel,
-      { text: quote.replace(/\/|\\/g, ''), user_added: args.userState.username }
-    );
+  quote &&
+    createDocument(WhyQuoteModel, {
+      text: quote.replace(/\/|\\/g, ''),
+      user_added: args.userName,
+    });
+
+  return `Quote saved!`;
 }
 
 /**
  * Sends a random WhyQuote to Twitch Chat.
  * @param {string} channel The Twitch channel to send any messages to.
  */
-function getQuote(args: CommandArguments) {
-  if (chatElements.whyQuotes.length > 0) {
-    const quoteIndex = Math.floor(
-      Math.random() * chatElements.whyQuotes.length
-    );
-    const quote = chatElements.whyQuotes[quoteIndex];
-    chatClient.say(
-      args.channel,
-      `"${quote.text}" - Added by @${
+function getRandomQuote(args: CommandArguments) {
+  const quoteIndex = Math.floor(Math.random() * chatElements.whyQuotes.length);
+  const quote = chatElements.whyQuotes[quoteIndex];
+  return quote
+    ? `"${quote.text}" - Added by @${
         quote.user_added
       } on ${quote.date_added.toLocaleDateString()}`
-    );
-  }
+    : 'No quotes available.';
 }
 
 /**
@@ -122,12 +118,9 @@ function getQuote(args: CommandArguments) {
  * @param {string} channel The Twitch channel to send any messages to.
  */
 function incrementDeathCounter(args: CommandArguments) {
-  incrementCounter(
-    args,
-    chatElements.deaths,
-    `${process.env.STREAMER_NAME} has died embarrassingly {count} times on stream!`,
-    false
-  );
+  incrementCounter(args, chatElements.deaths, false);
+
+  return `${process.env.STREAMER_NAME} has died embarrassingly ${chatElements.deaths.count} times on stream!`;
 }
 
 /**
@@ -135,43 +128,27 @@ function incrementDeathCounter(args: CommandArguments) {
  * @param {string} channel The Twitch channel to send any messages to.
  */
 function incrementBoopCounter(args: CommandArguments) {
-  incrementCounter(
-    args,
-    chatElements.boops,
-    `@${args.userState.username} booped the snoot! The snoot has been booped {count} times.`,
-    true
-  );
+  incrementCounter(args, chatElements.boops, true);
+
+  return `@${args.userName} booped the snoot! The snoot has been booped ${chatElements.boops.count} times.`;
 }
 
 function incrementCounter(
   args: CommandArguments,
   counter: ICounter,
-  updateMsg: string,
   trackScoreboard: boolean
 ) {
   counter.count++;
 
   if (trackScoreboard) {
-    const user = counter.scoreboard.find(
-      (x) => (x.user = args.userState.username)
-    );
+    const user = counter.scoreboard.find((x) => (x.user = args.userName));
 
     if (user) user.count++;
-    else
-      counter.scoreboard.push(
-        new CounterScoreboard(args.userState.username, 1)
-      );
+    else counter.scoreboard.push(new CounterScoreboard(args.userName, 1));
 
     counter.scoreboard = counter.scoreboard.sort((a, b) => b.count - a.count);
   }
-  updateDocument(
-    args.channel,
-    null,
-    counter,
-    null,
-    null,
-    updateMsg.replace('{count}', counter.count.toString())
-  );
+  updateDocument(counter);
 }
 
 /**
@@ -186,7 +163,8 @@ function showBoopBoard(args: CommandArguments) {
     scoreboardMessage =
       scoreboardMessage + ` ${i + 1}. @${score.user}: ${score.count} boops,`;
   }
-  chatClient.say(args.channel, _.trimEnd(scoreboardMessage, ','));
+
+  return _.trimEnd(scoreboardMessage, ',');
 }
 
 /**
@@ -196,26 +174,27 @@ function showBoopBoard(args: CommandArguments) {
  * @param {string} msg The message received from a Twitch chat channel.
  * @param {Array} arr An array containing the body of the Twitch message delimited by space.
  */
-async function addCommand(args: CommandArguments) {
-  if (isModerator(args.userState.badges) && args.msgArray.length > 2) {
+function addCommand(args: CommandArguments) {
+  if (args.isModerator && args.msgArray.length > 2) {
     const commandKeyword = _.toLower(args.msgArray[1]);
+    let msg = 'Command already exists.';
 
-    if (commandMap.has(`!${commandKeyword}`))
-      chatClient.say(args.channel, 'Command already exists.');
-    else {
+    if (!commandMap.has(`!${commandKeyword}`)) {
       const commandText = args.msg
         .slice(args.msgArray[0].length + commandKeyword.length + 2)
         .replace(/\/|\\/g, '');
 
-      const result = await createDocument(
-        args.channel,
-        `Command !${commandKeyword}`,
-        chatElements.simpleTextCommands,
-        SimpleTextCommandModel,
-        { command: commandKeyword, text: commandText }
-      );
-      addSimpleTextCommandToMap(result.command, result.text);
+      createDocument(SimpleTextCommandModel, {
+        command: commandKeyword,
+        text: commandText,
+      }).then((result) => {
+        chatElements.simpleTextCommands.push(result);
+        addSimpleTextCommandToMap(result.command, result.text);
+        msg = `Command !${commandKeyword} added!`;
+      });
     }
+
+    return msg;
   }
 }
 
@@ -226,27 +205,26 @@ async function addCommand(args: CommandArguments) {
  * @param {Array} arr An array containing the body of the Twitch message delimited by space.
  */
 function removeCommand(args: CommandArguments) {
-  if (isModerator(args.userState.badges) && args.msgArray.length > 1) {
+  let msg: string;
+
+  if (args.isModerator && args.msgArray.length > 1) {
     const removedCommands = _.remove(
       chatElements.simpleTextCommands,
       (x) => x.command === _.toLower(args.msgArray[1])
     );
 
     if (removedCommands.length > 0) {
-      removedCommands.forEach((element) => {
-        const fullCommand = `!${element.command}`;
-        commandMap.delete(fullCommand);
-        deleteDocument(
-          args.channel,
-          `Command ${fullCommand}`,
-          SimpleTextCommandModel,
-          { command: element.command }
-        );
-      });
-    } else {
-      chatClient.say(args.channel, 'Command not found.');
-    }
+      const element = removedCommands[0];
+      const fullCommand = `!${element.command}`;
+
+      commandMap.delete(fullCommand);
+      deleteDocument(SimpleTextCommandModel, { command: element.command });
+
+      let msg = `Command deleted.`;
+    } else msg = 'Command not found.';
   }
+
+  return msg;
 }
 
 /**
@@ -254,7 +232,7 @@ function removeCommand(args: CommandArguments) {
  * @param {string} channel The Twitch channel to send any messages to.
  */
 function showRules(args: CommandArguments) {
-  chatClient.say(args.channel, process.env.RULES_COMMAND_TEXT);
+  return process.env.RULES_COMMAND_TEXT;
 }
 
 /**
@@ -267,7 +245,7 @@ function showCommands(args: CommandArguments) {
     if (!value.mod_required) commandMsg += `${key} `;
   });
 
-  chatClient.say(args.channel, _.trimEnd(commandMsg));
+  return _.trimEnd(commandMsg);
 }
 
 /**
@@ -276,22 +254,19 @@ function showCommands(args: CommandArguments) {
  * @param {Tags} tags The Tags object from a Twitch message.
  */
 function showFollowage(args: CommandArguments) {
+  let msg: string;
   request(
-    `https://api.2g.be/twitch/followage/${process.env.CHANNEL_NAME}/${args.userState.username}?format=mwdhms`,
+    `https://api.2g.be/twitch/followage/${process.env.CHANNEL_NAME}/${args.userName}?format=mwdhms`,
     (error, response, body) => {
-      if (error) handleError(error);
-      if (response && response.statusCode === 200)
-        chatClient.say(args.channel, `@${body}`);
+      if (response && response.statusCode === 200) msg = `@${body}`;
     }
   );
+
+  return msg;
 }
 
-function startIntervals() {
-  const rulesIntervals: NodeJS.Timeout[] = [];
-  const channels = chatClient.getChannels();
-  channels.forEach((channel) =>
-    rulesIntervals.push(setInterval(showRules, rulesInterval, { channel }))
-  );
+function startIntervals(channel: string) {
+  setInterval(showRules, rulesInterval, channel);
 }
 
 //#endregion Command functions
@@ -306,24 +281,23 @@ function startIntervals() {
  */
 function setCounter(
   args: CommandArguments,
-  counterName: string,
+  counter: ICounter,
   count: number = NaN
 ) {
-  if (chatElements[counterName] && isModerator(args.userState.badges)) {
+  let msg: string;
+  if (args.isModerator) {
     let num = 0;
-    if (count) num = count;
-    else if (args.msgArray.length > 1) num = _.toInteger(args.msgArray[1]);
 
+    if (args.msgArray.length > 1) num = _.toInteger(args.msgArray[1]);
+    num = count && num;
     if (!_.isInteger(num)) num = 0;
-    updateDocument(
-      args.channel,
-      null,
-      chatElements[counterName],
-      'count',
-      num,
-      `${_.upperFirst(counterName)} set to ${num}.`
-    );
+
+    counter.count = num;
+    updateDocument(counter);
+    msg = `${_.upperFirst(counter.name)} set to ${num}.`;
   }
+
+  return msg;
 }
 
 /**
@@ -334,10 +308,7 @@ function setCounter(
 function addSimpleTextCommandToMap(command: string, text: string) {
   commandMap.set(
     '!' + command,
-    new Command(
-      (args: CommandArguments) => chatClient.say(args.channel, text),
-      false
-    )
+    new Command((args: CommandArguments) => text, false)
   );
 }
 
@@ -350,17 +321,19 @@ function addSimpleTextCommandToMap(command: string, text: string) {
  */
 function createCooldownCommand(
   thisArg,
-  func: (args: CommandArguments) => void,
+  func: (args: CommandArguments) => string,
   timeout: number
 ) {
   let onCooldown = false;
 
   return (args: CommandArguments) => {
+    let msg: string;
     if (!onCooldown) {
-      func.call(thisArg, args);
+      msg = func.call(thisArg, args);
       onCooldown = true;
       setTimeout(() => (onCooldown = false), timeout);
     }
+    return msg;
   };
 }
 

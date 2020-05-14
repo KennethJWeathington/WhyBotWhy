@@ -45,17 +45,10 @@ async function loadDocument<T extends Document>(
  * @param {Function} afterSaveFunc Callback function to be called after document successfully saves.
  */
 async function createDocument<T extends Document>(
-  channel: string,
-  name: string,
-  arr: T[],
   model: Model<T>,
   createObj: {}
 ) {
   const promise = model.create(createObj);
-
-  const result = await promise;
-  arr.push(result);
-  chatClient.say(channel, `${name} saved!`);
 
   return promise;
 }
@@ -68,13 +61,10 @@ async function createDocument<T extends Document>(
  * @param {Object} searchObj Search criteria to limit deletion of documents.
  */
 async function deleteDocument<T extends Document>(
-  channel: string,
-  name: string,
   model: Model<T>,
   searchObj: {}
 ) {
-  await model.deleteOne(searchObj).exec();
-  chatClient.say(channel, `${name} deleted.`);
+  return model.deleteOne(searchObj).exec();
 }
 
 /**
@@ -86,19 +76,8 @@ async function deleteDocument<T extends Document>(
  * @param {*} [newVal] New value to set to prop.
  * @param {string} [msg] Message to display in chat after document updates.
  */
-async function updateDocument<T extends Document>(
-  channel: string,
-  name: string,
-  obj: T,
-  propName: string,
-  newVal: any,
-  msg: string
-) {
-  if (propName) obj[propName] = newVal;
-  if (!msg) msg = `${name} updated.`;
-
-  await obj.save();
-  chatClient.say(channel, msg);
+async function updateDocument<T extends Document>(obj: T) {
+  return obj.save();
 }
 
 export { updateDocument, createDocument, deleteDocument, loadDocument };
