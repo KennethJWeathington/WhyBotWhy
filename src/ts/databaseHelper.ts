@@ -18,21 +18,12 @@ db.on('error', console.error.bind(console, 'MongoDB connection error:'));
  * @param {*} def Default value if no matching document found.
  * @returns {Promise<Document>} Promise containing loaded documents.
  */
-async function loadDocument<T extends Document>(
-  model: Model<T>,
-  findObj: {},
-  name: string,
-  loadOne: boolean,
-  def: any = null
-) {
-  let promise: Promise<T> | Promise<T[]>;
-  if (loadOne) promise = model.findOne(findObj).exec();
-  else promise = model.find(findObj).exec();
+async function loadDocument<T extends Document>(model: Model<T>, findObj: {}) {
+  return model.findOne(findObj).exec();
+}
 
-  let result = await promise;
-  if (result) chatElements[name] = result;
-  else if (def) chatElements[name] = def;
-  console.log(`Loaded ${name}`);
+async function loadDocuments<T extends Document>(model: Model<T>, findObj: {}) {
+  return model.find(findObj).exec();
 }
 
 /**
@@ -48,9 +39,7 @@ async function createDocument<T extends Document>(
   model: Model<T>,
   createObj: {}
 ) {
-  const promise = model.create(createObj);
-
-  return promise;
+  return model.create(createObj);
 }
 
 /**
@@ -80,4 +69,10 @@ async function updateDocument<T extends Document>(obj: T) {
   return obj.save();
 }
 
-export { updateDocument, createDocument, deleteDocument, loadDocument };
+export {
+  updateDocument,
+  createDocument,
+  deleteDocument,
+  loadDocument,
+  loadDocuments,
+};

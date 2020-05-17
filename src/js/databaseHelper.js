@@ -16,20 +16,14 @@ db.on('error', console.error.bind(console, 'MongoDB connection error:'));
  * @param {*} def Default value if no matching document found.
  * @returns {Promise<Document>} Promise containing loaded documents.
  */
-async function loadDocument(model, findObj, name, loadOne, def = null) {
-    let promise;
-    if (loadOne)
-        promise = model.findOne(findObj).exec();
-    else
-        promise = model.find(findObj).exec();
-    let result = await promise;
-    if (result)
-        chatElements[name] = result;
-    else if (def)
-        chatElements[name] = def;
-    console.log(`Loaded ${name}`);
+async function loadDocument(model, findObj) {
+    return model.findOne(findObj).exec();
 }
 exports.loadDocument = loadDocument;
+async function loadDocuments(model, findObj) {
+    return model.find(findObj).exec();
+}
+exports.loadDocuments = loadDocuments;
 /**
  * Creates and saves a document object.
  * @param {string} channel The Twitch channel to send any messages to.
@@ -40,8 +34,7 @@ exports.loadDocument = loadDocument;
  * @param {Function} afterSaveFunc Callback function to be called after document successfully saves.
  */
 async function createDocument(model, createObj) {
-    const promise = model.create(createObj);
-    return promise;
+    return model.create(createObj);
 }
 exports.createDocument = createDocument;
 /**

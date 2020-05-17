@@ -9,6 +9,7 @@ import {
   deleteDocument,
   updateDocument,
   loadDocument,
+  loadDocuments,
 } from './databaseHelper';
 
 import * as request from 'request';
@@ -78,6 +79,26 @@ commandMap.set('!removecommand', new Command(removeCommand, true));
 commandMap.set('!rules', new Command(showRules, false));
 commandMap.set('!commands', new Command(showCommands, false));
 commandMap.set('!followage', new Command(showFollowage, false));
+
+async function setupCommands() {
+  const whyQuotePromise = loadDocuments(WhyQuoteModel, {});
+  const deathsPromise = loadDocument(CounterModel, { name: 'deaths' });
+  const boopsPromise = loadDocument(CounterModel, { name: 'boops' });
+  const simpleTextCommandPromise = loadDocuments(SimpleTextCommandModel, {});
+
+  const whyQuotes = await whyQuotePromise;
+  chatElements.whyQuotes = whyQuotes || [];
+  const deaths = await deathsPromise;
+  chatElements.deaths = deaths;
+  const boops = await boopsPromise;
+  chatElements.boops = boops;
+  const simpleTextCommands = await simpleTextCommandPromise;
+  chatElements.simpleTextCommands = simpleTextCommands || [];
+
+  chatElements.simpleTextCommands.forEach((element) =>
+    addSimpleTextCommandToMap(element.command, element.text)
+  );
+}
 
 //#region Command functions
 
@@ -231,7 +252,7 @@ function removeCommand(args: CommandArguments) {
  * Sends a message containing the channel rules into Twitch Chat.
  * @param {string} channel The Twitch channel to send any messages to.
  */
-function showRules(args: CommandArguments) {
+function showRules() {
   return process.env.RULES_COMMAND_TEXT;
 }
 
@@ -263,10 +284,6 @@ function showFollowage(args: CommandArguments) {
   );
 
   return msg;
-}
-
-function startIntervals(channel: string) {
-  setInterval(showRules, rulesInterval, channel);
 }
 
 //#endregion Command functions
@@ -337,4 +354,6 @@ function createCooldownCommand(
   };
 }
 
-export { commandMap, CommandArguments };
+const IntervalCommands = [{ command: showRules, interval: rulesInterval }];
+
+export { commandMap, CommandArguments, setupCommands, IntervalCommands };

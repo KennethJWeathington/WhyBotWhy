@@ -30,7 +30,7 @@ function onMessageHandler(channel, userState, msg, self) {
     const commandName = arr[0].toLowerCase();
     const commandElement = commandMap_1.commandMap.get(commandName);
     if (commandElement)
-        commandElement.command(new commandMap_1.CommandArguments(channel, userState, trimmedMsg, arr));
+        commandElement.command(new commandMap_1.CommandArguments(channel, userState.username, trimmedMsg, arr, chatClient_1.isModerator(userState.badges)));
 }
 /**
  * Handler for subscription event of connection to Twitch Chat. Used to respond to subscriptions.
@@ -54,17 +54,17 @@ function onConnectedHandler(addr, port) {
  * Loads all documents required for chat interaction into chatElements and connects to Twitch Chat.
  */
 async function setup() {
-    const promArray = [
-        loadChatElement(WhyQuoteModel, {}, 'whyQuotes', false, []),
-        loadChatElement(CounterModel, { name: 'deaths' }, 'deaths', true),
-        loadChatElement(CounterModel, { name: 'boops' }, 'boops', true),
-        loadChatElement(SimpleTextCommandModel, {}, 'simpleTextCommands', false, []),
-    ];
-    await Promise.all(promArray).catch((err) => handleError(err));
-    chatElements.simpleTextCommands.forEach((element) => addSimpleTextCommandToMap(element.command, element.text));
+    await commandMap_1.setupCommands().catch((err) => handleError(err));
     console.log('All data loaded.');
     await chatClient_1.chatClient.connect();
-    startIntervals();
+    for (const channel of chatClient_1.chatClient.getChannels()) {
+        startIntervals(channel);
+    }
+}
+function startIntervals(channel) {
+    for (const intervalCommand of commandMap_1.IntervalCommands) {
+        setInterval(() => chatClient_1.chatClient.say(channel, intervalCommand.command()), intervalCommand.interval, channel);
+    }
 }
 /**
  * Handles an error by logging the results in the console.
@@ -73,12 +73,5 @@ async function setup() {
 function handleError(msg) {
     console.log(msg);
     return;
-}
-/**
- * Returns whether the badges of a user allows them to access moderator actions.
- * @param {Array} badges Array of badges for a given user in Twitch Chat.
- */
-function isModerator(badges) {
-    return badges && (badges.broadcaster || badges.moderator);
 }
 //#endregion Helper Functions

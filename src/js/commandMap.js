@@ -43,6 +43,22 @@ commandMap.set('!removecommand', new Command(removeCommand, true));
 commandMap.set('!rules', new Command(showRules, false));
 commandMap.set('!commands', new Command(showCommands, false));
 commandMap.set('!followage', new Command(showFollowage, false));
+async function setupCommands() {
+    const whyQuotePromise = databaseHelper_1.loadDocuments(whyquote_1.default, {});
+    const deathsPromise = databaseHelper_1.loadDocument(counter_1.default, { name: 'deaths' });
+    const boopsPromise = databaseHelper_1.loadDocument(counter_1.default, { name: 'boops' });
+    const simpleTextCommandPromise = databaseHelper_1.loadDocuments(simpletextcommand_1.default, {});
+    const whyQuotes = await whyQuotePromise;
+    chatElements.whyQuotes = whyQuotes || [];
+    const deaths = await deathsPromise;
+    chatElements.deaths = deaths;
+    const boops = await boopsPromise;
+    chatElements.boops = boops;
+    const simpleTextCommands = await simpleTextCommandPromise;
+    chatElements.simpleTextCommands = simpleTextCommands || [];
+    chatElements.simpleTextCommands.forEach((element) => addSimpleTextCommandToMap(element.command, element.text));
+}
+exports.setupCommands = setupCommands;
 //#region Command functions
 /**
  * Adds a quote to the WhyQuote collection.
@@ -165,7 +181,7 @@ function removeCommand(args) {
  * Sends a message containing the channel rules into Twitch Chat.
  * @param {string} channel The Twitch channel to send any messages to.
  */
-function showRules(args) {
+function showRules() {
     return process.env.RULES_COMMAND_TEXT;
 }
 /**
@@ -192,9 +208,6 @@ function showFollowage(args) {
             msg = `@${body}`;
     });
     return msg;
-}
-function startIntervals(channel) {
-    setInterval(showRules, rulesInterval, channel);
 }
 //#endregion Command functions
 /**
@@ -247,3 +260,5 @@ function createCooldownCommand(thisArg, func, timeout) {
         return msg;
     };
 }
+const IntervalCommands = [{ command: showRules, interval: rulesInterval }];
+exports.IntervalCommands = IntervalCommands;

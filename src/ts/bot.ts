@@ -2,8 +2,13 @@
 
 import { config } from 'dotenv';
 config();
-import { chatClient, Userstate } from './chatClient';
-import { commandMap, CommandArguments } from './commandMap';
+import { chatClient, Userstate, isModerator } from './chatClient';
+import {
+  commandMap,
+  CommandArguments,
+  setupCommands,
+  IntervalCommands,
+} from './commandMap';
 
 //#endregion Imports
 
@@ -45,7 +50,13 @@ function onMessageHandler(
   const commandElement = commandMap.get(commandName);
   if (commandElement)
     commandElement.command(
-      new CommandArguments(channel, userState, trimmedMsg, arr)
+      new CommandArguments(
+        channel,
+        userState.username,
+        trimmedMsg,
+        arr,
+        isModerator(userState.badges)
+      )
     );
 }
 
@@ -78,26 +89,23 @@ function onConnectedHandler(addr: string, port: number) {
  * Loads all documents required for chat interaction into chatElements and connects to Twitch Chat.
  */
 async function setup() {
-  const promArray = [
-    loadChatElement(WhyQuoteModel, {}, 'whyQuotes', false, []),
-    loadChatElement(CounterModel, { name: 'deaths' }, 'deaths', true),
-    loadChatElement(CounterModel, { name: 'boops' }, 'boops', true),
-    loadChatElement(
-      SimpleTextCommandModel,
-      {},
-      'simpleTextCommands',
-      false,
-      []
-    ),
-  ];
-
-  await Promise.all(promArray).catch((err) => handleError(err));
-  chatElements.simpleTextCommands.forEach((element) =>
-    addSimpleTextCommandToMap(element.command, element.text)
-  );
+  await setupCommands().catch((err) => handleError(err));
   console.log('All data loaded.');
   await chatClient.connect();
-  startIntervals();
+
+  for (const channel of chatClient.getChannels()) {
+    startIntervals(channel);
+  }
+}
+
+function startIntervals(channel: string) {
+  for (const intervalCommand of IntervalCommands) {
+    setInterval(
+      () => chatClient.say(channel, intervalCommand.command()),
+      intervalCommand.interval,
+      channel
+    );
+  }
 }
 
 /**
@@ -107,14 +115,6 @@ async function setup() {
 function handleError(msg: string) {
   console.log(msg);
   return;
-}
-
-/**
- * Returns whether the badges of a user allows them to access moderator actions.
- * @param {Array} badges Array of badges for a given user in Twitch Chat.
- */
-function isModerator(badges: tmi.Badges) {
-  return badges && (badges.broadcaster || badges.moderator);
 }
 
 //#endregion Helper Functions
