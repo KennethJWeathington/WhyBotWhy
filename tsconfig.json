@@ -1,10 +1,10 @@
 {
-    "compilerOptions": {
-        "target": "ESNext",
-        "watch": true,
-        "lib": ["ESNext","DOM"],
-        "module": "commonjs",
-        "rootDir": "src/ts",
-        "outDir": "src/js"
-    }
+  "compilerOptions": {
+    "target": "ESNext",
+    "watch": true,
+    "lib": ["ESNext", "DOM"],
+    "module": "commonjs",
+    "rootDir": "src/ts",
+    "outDir": "src/js"
+  }
 }

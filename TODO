@@ -43,6 +43,9 @@ Commands:
   3. PsychoticPAL 25 boops
   ☐ Commands to manipulate metadata
   ☐ Command to reload data
+  ☐ Command to add message on timer
+  ☐ Change cooldown to a ts decorator maybe
+  ☐ death count
 
 Basics:
   ✘ pong reply @cancelled(20-04-11 13:13)
