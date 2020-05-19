@@ -29,8 +29,12 @@ function onMessageHandler(channel, userState, msg, self) {
     const arr = trimmedMsg.split(' ');
     const commandName = arr[0].toLowerCase();
     const commandElement = commandMap_1.commandMap.get(commandName);
-    if (commandElement)
-        commandElement.command(new commandMap_1.CommandArguments(channel, userState.username, trimmedMsg, arr, chatClient_1.isModerator(userState.badges)));
+    if (commandElement) {
+        const message = commandElement.command(new commandMap_1.CommandArguments(channel, userState.username, trimmedMsg, arr, chatClient_1.isModerator(userState.badges)));
+        for (const channel of chatClient_1.chatClient.getChannels()) {
+            chatClient_1.chatClient.say(channel, message);
+        }
+    }
 }
 /**
  * Handler for subscription event of connection to Twitch Chat. Used to respond to subscriptions.

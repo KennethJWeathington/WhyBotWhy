@@ -48,8 +48,8 @@ function onMessageHandler(
   const commandName = arr[0].toLowerCase();
 
   const commandElement = commandMap.get(commandName);
-  if (commandElement)
-    commandElement.command(
+  if (commandElement) {
+    const message = commandElement.command(
       new CommandArguments(
         channel,
         userState.username,
@@ -58,6 +58,10 @@ function onMessageHandler(
         isModerator(userState.badges)
       )
     );
+    for (const channel of chatClient.getChannels()) {
+      chatClient.say(channel, message);
+    }
+  }
 }
 
 /**
