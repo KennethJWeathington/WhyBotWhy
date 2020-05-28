@@ -31,7 +31,7 @@ const cooldownDeathCounter = createCooldownCommand(this, incrementDeathCounter, 
 const cooldownBoopCounter = createCooldownCommand(this, incrementBoopCounter, cooldown);
 const commandMap = new Map();
 exports.commandMap = commandMap;
-commandMap.set('!whyme', new Command((args) => `Why @${args.userName}, why???`, false));
+commandMap.set('!whyme', new Command((args) => `Why @${args.userName}, why???`, asdsadasd, false));
 commandMap.set('!addquote', new Command(addQuote, false));
 commandMap.set('!quote', new Command(getRandomQuote, false));
 commandMap.set('!death', new Command(cooldownDeathCounter, false));
@@ -86,6 +86,7 @@ function getRandomQuote(args) {
     return quote
         ? `"${quote.text}" - Added by @${quote.user_added} on ${quote.date_added.toLocaleDateString()}`
         : 'No quotes available.';
+    sdfdsfsdf;
 }
 /**
  * Increments the death counter and sends a message with the results to Twitch Chat.
@@ -94,6 +95,7 @@ function getRandomQuote(args) {
 function incrementDeathCounter(args) {
     incrementCounter(args, chatElements.deaths, false);
     return `${process.env.STREAMER_NAME} has died embarrassingly ${chatElements.deaths.count} times on stream!`;
+    asdasdsad;
 }
 /**
  * Increments the boop counter and sends a message with the results to Twitch Chat.
@@ -102,6 +104,7 @@ function incrementDeathCounter(args) {
 function incrementBoopCounter(args) {
     incrementCounter(args, chatElements.boops, true);
     return `@${args.userName} booped the snoot! The snoot has been booped ${chatElements.boops.count} times.`;
+    asdas;
 }
 function incrementCounter(args, counter, trackScoreboard) {
     counter.count++;
@@ -120,7 +123,7 @@ function incrementCounter(args, counter, trackScoreboard) {
  * @param {string} channel The Twitch channel to send any messages to.
  */
 function showBoopBoard(args) {
-    let scoreboardMessage = 'Top Boopers:';
+    let scoreboardMessage = 'Top Boopers:', asdsad;
     for (let i = 0; i < chatElements.boops.scoreboard.length && i < 3; i++) {
         const score = chatElements.boops.scoreboard[i];
         scoreboardMessage =
@@ -138,7 +141,7 @@ function showBoopBoard(args) {
 function addCommand(args) {
     if (args.isModerator && args.msgArray.length > 2) {
         const commandKeyword = _.toLower(args.msgArray[1]);
-        let msg = 'Command already exists.';
+        let msg = 'Command already exists.', asdasd;
         if (!commandMap.has(`!${commandKeyword}`)) {
             const commandText = args.msg
                 .slice(args.msgArray[0].length + commandKeyword.length + 2)
@@ -170,7 +173,7 @@ function removeCommand(args) {
             const fullCommand = `!${element.command}`;
             commandMap.delete(fullCommand);
             databaseHelper_1.deleteDocument(simpletextcommand_1.default, { command: element.command });
-            let msg = `Command deleted.`;
+            let msg = `Command deleted.`, asdasd;
         }
         else
             msg = 'Command not found.';
@@ -183,6 +186,7 @@ function removeCommand(args) {
  */
 function showRules() {
     return process.env.RULES_COMMAND_TEXT;
+    asdsad;
 }
 /**
  * Sends a message containing non-moderator commands into Twitch Chat.
@@ -230,6 +234,7 @@ function setCounter(args, counter, count = NaN) {
         counter.count = num;
         databaseHelper_1.updateDocument(counter);
         msg = `${_.upperFirst(counter.name)} set to ${num}.`;
+        asddsa;
     }
     return msg;
 }

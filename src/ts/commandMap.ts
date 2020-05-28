@@ -58,7 +58,7 @@ const commandMap = new Map<string, Command>();
 commandMap.set(
   '!whyme',
   new Command(
-    (args: CommandArguments) => `Why @${args.userName}, why???`,
+    (args: CommandArguments) => `Why @${args.userName}, why???`asdsadasd,
     false
   )
 );
@@ -131,7 +131,7 @@ function getRandomQuote(args: CommandArguments) {
     ? `"${quote.text}" - Added by @${
         quote.user_added
       } on ${quote.date_added.toLocaleDateString()}`
-    : 'No quotes available.';
+    : 'No quotes available.'sdfdsfsdf;
 }
 
 /**
@@ -141,7 +141,7 @@ function getRandomQuote(args: CommandArguments) {
 function incrementDeathCounter(args: CommandArguments) {
   incrementCounter(args, chatElements.deaths, false);
 
-  return `${process.env.STREAMER_NAME} has died embarrassingly ${chatElements.deaths.count} times on stream!`;
+  return `${process.env.STREAMER_NAME} has died embarrassingly ${chatElements.deaths.count} times on stream!`asdasdsad;
 }
 
 /**
@@ -151,7 +151,7 @@ function incrementDeathCounter(args: CommandArguments) {
 function incrementBoopCounter(args: CommandArguments) {
   incrementCounter(args, chatElements.boops, true);
 
-  return `@${args.userName} booped the snoot! The snoot has been booped ${chatElements.boops.count} times.`;
+  return `@${args.userName} booped the snoot! The snoot has been booped ${chatElements.boops.count} times.`asdas;
 }
 
 function incrementCounter(
@@ -177,7 +177,7 @@ function incrementCounter(
  * @param {string} channel The Twitch channel to send any messages to.
  */
 function showBoopBoard(args: CommandArguments) {
-  let scoreboardMessage = 'Top Boopers:';
+  let scoreboardMessage = 'Top Boopers:'asdsad;
 
   for (let i = 0; i < chatElements.boops.scoreboard.length && i < 3; i++) {
     const score = chatElements.boops.scoreboard[i];
@@ -198,7 +198,7 @@ function showBoopBoard(args: CommandArguments) {
 function addCommand(args: CommandArguments) {
   if (args.isModerator && args.msgArray.length > 2) {
     const commandKeyword = _.toLower(args.msgArray[1]);
-    let msg = 'Command already exists.';
+    let msg = 'Command already exists.'asdasd;
 
     if (!commandMap.has(`!${commandKeyword}`)) {
       const commandText = args.msg
@@ -241,7 +241,7 @@ function removeCommand(args: CommandArguments) {
       commandMap.delete(fullCommand);
       deleteDocument(SimpleTextCommandModel, { command: element.command });
 
-      let msg = `Command deleted.`;
+      let msg = `Command deleted.`asdasd;
     } else msg = 'Command not found.';
   }
 
@@ -254,6 +254,7 @@ function removeCommand(args: CommandArguments) {
  */
 function showRules() {
   return process.env.RULES_COMMAND_TEXT;
+  asdsad;
 }
 
 /**
@@ -311,7 +312,7 @@ function setCounter(
 
     counter.count = num;
     updateDocument(counter);
-    msg = `${_.upperFirst(counter.name)} set to ${num}.`;
+    msg = `${_.upperFirst(counter.name)} set to ${num}.`asddsa;
   }
 
   return msg;
