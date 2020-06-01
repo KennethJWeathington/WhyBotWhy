@@ -11,7 +11,7 @@ import {
   loadDocument,
   loadDocuments,
 } from './databaseHelper';
-
+import { Messages, AssembleTemplatedString } from './commandMessages';
 import * as request from 'request';
 
 const cooldown = Number.parseInt(process.env.COMMAND_TIMEOUT);
@@ -58,7 +58,8 @@ const commandMap = new Map<string, Command>();
 commandMap.set(
   '!whyme',
   new Command(
-    (args: CommandArguments) => `Why @${args.userName}, why???`asdsadasd,
+    (args: CommandArguments) =>
+      AssembleTemplatedString(Messages.WHY, { name: args.userName }),
     false
   )
 );
@@ -128,10 +129,12 @@ function getRandomQuote(args: CommandArguments) {
   const quoteIndex = Math.floor(Math.random() * chatElements.whyQuotes.length);
   const quote = chatElements.whyQuotes[quoteIndex];
   return quote
-    ? `"${quote.text}" - Added by @${
-        quote.user_added
-      } on ${quote.date_added.toLocaleDateString()}`
-    : 'No quotes available.'sdfdsfsdf;
+    ? AssembleTemplatedString(Messages.QUOTE, {
+        quote: quote.text,
+        name: quote.user_added,
+        date: quote.date_added.toLocaleDateString(),
+      })
+    : Messages.NO_QUOTES;
 }
 
 /**
@@ -141,7 +144,10 @@ function getRandomQuote(args: CommandArguments) {
 function incrementDeathCounter(args: CommandArguments) {
   incrementCounter(args, chatElements.deaths, false);
 
-  return `${process.env.STREAMER_NAME} has died embarrassingly ${chatElements.deaths.count} times on stream!`asdasdsad;
+  return AssembleTemplatedString(Messages.DEATH, {
+    name: process.env.STREAMER_NAME,
+    count: chatElements.deaths.count,
+  });
 }
 
 /**
@@ -151,7 +157,10 @@ function incrementDeathCounter(args: CommandArguments) {
 function incrementBoopCounter(args: CommandArguments) {
   incrementCounter(args, chatElements.boops, true);
 
-  return `@${args.userName} booped the snoot! The snoot has been booped ${chatElements.boops.count} times.`asdas;
+  return AssembleTemplatedString(Messages.BOOP, {
+    name: args.userName,
+    count: chatElements.boops.count,
+  });
 }
 
 function incrementCounter(
@@ -177,12 +186,17 @@ function incrementCounter(
  * @param {string} channel The Twitch channel to send any messages to.
  */
 function showBoopBoard(args: CommandArguments) {
-  let scoreboardMessage = 'Top Boopers:'asdsad;
+  let scoreboardMessage = Messages.BOOP_LEADERBOARD;
 
   for (let i = 0; i < chatElements.boops.scoreboard.length && i < 3; i++) {
     const score = chatElements.boops.scoreboard[i];
     scoreboardMessage =
-      scoreboardMessage + ` ${i + 1}. @${score.user}: ${score.count} boops,`;
+      scoreboardMessage +
+      AssembleTemplatedString(Messages.BOOP_PLACEMENT, {
+        placement: i + 1,
+        name: score.user,
+        score: score.count,
+      });
   }
 
   return _.trimEnd(scoreboardMessage, ',');
@@ -198,7 +212,7 @@ function showBoopBoard(args: CommandArguments) {
 function addCommand(args: CommandArguments) {
   if (args.isModerator && args.msgArray.length > 2) {
     const commandKeyword = _.toLower(args.msgArray[1]);
-    let msg = 'Command already exists.'asdasd;
+    let msg = Messages.COMMAND_EXISTS;
 
     if (!commandMap.has(`!${commandKeyword}`)) {
       const commandText = args.msg
@@ -211,7 +225,9 @@ function addCommand(args: CommandArguments) {
       }).then((result) => {
         chatElements.simpleTextCommands.push(result);
         addSimpleTextCommandToMap(result.command, result.text);
-        msg = `Command !${commandKeyword} added!`;
+        msg = AssembleTemplatedString(Messages.COMMAND_ADDED, {
+          command: commandKeyword,
+        });
       });
     }
 
@@ -241,8 +257,8 @@ function removeCommand(args: CommandArguments) {
       commandMap.delete(fullCommand);
       deleteDocument(SimpleTextCommandModel, { command: element.command });
 
-      let msg = `Command deleted.`asdasd;
-    } else msg = 'Command not found.';
+      let msg = Messages.COMMAND_DELETED;
+    } else msg = Messages.COMMAND_NOT_FOUND;
   }
 
   return msg;
@@ -253,8 +269,7 @@ function removeCommand(args: CommandArguments) {
  * @param {string} channel The Twitch channel to send any messages to.
  */
 function showRules() {
-  return process.env.RULES_COMMAND_TEXT;
-  asdsad;
+  return Messages.RULES;
 }
 
 /**
@@ -312,7 +327,10 @@ function setCounter(
 
     counter.count = num;
     updateDocument(counter);
-    msg = `${_.upperFirst(counter.name)} set to ${num}.`asddsa;
+    msg = AssembleTemplatedString(Messages.COUNTER_SET, {
+      counter: _.upperFirst(counter.name),
+      count: num,
+    });
   }
 
   return msg;

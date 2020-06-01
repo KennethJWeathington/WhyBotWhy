@@ -5,6 +5,7 @@ const counter_1 = require("./models/counter");
 const simpletextcommand_1 = require("./models/simpletextcommand");
 const _ = require("lodash");
 const databaseHelper_1 = require("./databaseHelper");
+const commandMessages_1 = require("./commandMessages");
 const request = require("request");
 const cooldown = Number.parseInt(process.env.COMMAND_TIMEOUT);
 const rulesInterval = Number.parseInt(process.env.RULES_TIMEOUT);
@@ -31,7 +32,7 @@ const cooldownDeathCounter = createCooldownCommand(this, incrementDeathCounter, 
 const cooldownBoopCounter = createCooldownCommand(this, incrementBoopCounter, cooldown);
 const commandMap = new Map();
 exports.commandMap = commandMap;
-commandMap.set('!whyme', new Command((args) => `Why @${args.userName}, why???`, asdsadasd, false));
+commandMap.set('!whyme', new Command((args) => commandMessages_1.AssembleTemplatedString(commandMessages_1.Messages.WHY, { name: args.userName }), false));
 commandMap.set('!addquote', new Command(addQuote, false));
 commandMap.set('!quote', new Command(getRandomQuote, false));
 commandMap.set('!death', new Command(cooldownDeathCounter, false));
@@ -84,9 +85,12 @@ function getRandomQuote(args) {
     const quoteIndex = Math.floor(Math.random() * chatElements.whyQuotes.length);
     const quote = chatElements.whyQuotes[quoteIndex];
     return quote
-        ? `"${quote.text}" - Added by @${quote.user_added} on ${quote.date_added.toLocaleDateString()}`
-        : 'No quotes available.';
-    sdfdsfsdf;
+        ? commandMessages_1.AssembleTemplatedString(commandMessages_1.Messages.QUOTE, {
+            quote: quote.text,
+            name: quote.user_added,
+            date: quote.date_added.toLocaleDateString(),
+        })
+        : commandMessages_1.Messages.NO_QUOTES;
 }
 /**
  * Increments the death counter and sends a message with the results to Twitch Chat.
@@ -94,8 +98,10 @@ function getRandomQuote(args) {
  */
 function incrementDeathCounter(args) {
     incrementCounter(args, chatElements.deaths, false);
-    return `${process.env.STREAMER_NAME} has died embarrassingly ${chatElements.deaths.count} times on stream!`;
-    asdasdsad;
+    return commandMessages_1.AssembleTemplatedString(commandMessages_1.Messages.DEATH, {
+        name: process.env.STREAMER_NAME,
+        count: chatElements.deaths.count,
+    });
 }
 /**
  * Increments the boop counter and sends a message with the results to Twitch Chat.
@@ -103,8 +109,10 @@ function incrementDeathCounter(args) {
  */
 function incrementBoopCounter(args) {
     incrementCounter(args, chatElements.boops, true);
-    return `@${args.userName} booped the snoot! The snoot has been booped ${chatElements.boops.count} times.`;
-    asdas;
+    return commandMessages_1.AssembleTemplatedString(commandMessages_1.Messages.BOOP, {
+        name: args.userName,
+        count: chatElements.boops.count,
+    });
 }
 function incrementCounter(args, counter, trackScoreboard) {
     counter.count++;
@@ -123,11 +131,16 @@ function incrementCounter(args, counter, trackScoreboard) {
  * @param {string} channel The Twitch channel to send any messages to.
  */
 function showBoopBoard(args) {
-    let scoreboardMessage = 'Top Boopers:', asdsad;
+    let scoreboardMessage = commandMessages_1.Messages.BOOP_LEADERBOARD;
     for (let i = 0; i < chatElements.boops.scoreboard.length && i < 3; i++) {
         const score = chatElements.boops.scoreboard[i];
         scoreboardMessage =
-            scoreboardMessage + ` ${i + 1}. @${score.user}: ${score.count} boops,`;
+            scoreboardMessage +
+                commandMessages_1.AssembleTemplatedString(commandMessages_1.Messages.BOOP_PLACEMENT, {
+                    placement: i + 1,
+                    name: score.user,
+                    score: score.count,
+                });
     }
     return _.trimEnd(scoreboardMessage, ',');
 }
@@ -141,7 +154,7 @@ function showBoopBoard(args) {
 function addCommand(args) {
     if (args.isModerator && args.msgArray.length > 2) {
         const commandKeyword = _.toLower(args.msgArray[1]);
-        let msg = 'Command already exists.', asdasd;
+        let msg = commandMessages_1.Messages.COMMAND_EXISTS;
         if (!commandMap.has(`!${commandKeyword}`)) {
             const commandText = args.msg
                 .slice(args.msgArray[0].length + commandKeyword.length + 2)
@@ -152,7 +165,9 @@ function addCommand(args) {
             }).then((result) => {
                 chatElements.simpleTextCommands.push(result);
                 addSimpleTextCommandToMap(result.command, result.text);
-                msg = `Command !${commandKeyword} added!`;
+                msg = commandMessages_1.AssembleTemplatedString(commandMessages_1.Messages.COMMAND_ADDED, {
+                    command: commandKeyword,
+                });
             });
         }
         return msg;
@@ -173,10 +188,10 @@ function removeCommand(args) {
             const fullCommand = `!${element.command}`;
             commandMap.delete(fullCommand);
             databaseHelper_1.deleteDocument(simpletextcommand_1.default, { command: element.command });
-            let msg = `Command deleted.`, asdasd;
+            let msg = commandMessages_1.Messages.COMMAND_DELETED;
         }
         else
-            msg = 'Command not found.';
+            msg = commandMessages_1.Messages.COMMAND_NOT_FOUND;
     }
     return msg;
 }
@@ -185,8 +200,7 @@ function removeCommand(args) {
  * @param {string} channel The Twitch channel to send any messages to.
  */
 function showRules() {
-    return process.env.RULES_COMMAND_TEXT;
-    asdsad;
+    return commandMessages_1.Messages.RULES;
 }
 /**
  * Sends a message containing non-moderator commands into Twitch Chat.
@@ -233,8 +247,10 @@ function setCounter(args, counter, count = NaN) {
             num = 0;
         counter.count = num;
         databaseHelper_1.updateDocument(counter);
-        msg = `${_.upperFirst(counter.name)} set to ${num}.`;
-        asddsa;
+        msg = commandMessages_1.AssembleTemplatedString(commandMessages_1.Messages.COUNTER_SET, {
+            counter: _.upperFirst(counter.name),
+            count: num,
+        });
     }
     return msg;
 }
