@@ -2,7 +2,7 @@
 
 import { config } from 'dotenv';
 config();
-import { chatClient, Userstate, isModerator } from './chatClient';
+import { setMessageHandler } from './chatClient';
 import {
   commandMap,
   CommandArguments,
@@ -16,7 +16,6 @@ import {
 
 chatClient.on('message', onMessageHandler);
 chatClient.on('subscription', onSubscriptionHandler);
-chatClient.on('connected', onConnectedHandler);
 
 //#endregion tmi.js
 
@@ -51,7 +50,6 @@ function onMessageHandler(
   if (commandElement) {
     const message = commandElement.command(
       new CommandArguments(
-        channel,
         userState.username,
         trimmedMsg,
         arr,
@@ -64,6 +62,27 @@ function onMessageHandler(
   }
 }
 
+function processMessage(
+  message: string,
+  userName: string,
+  isModerator: boolean
+): string {
+  let outputMessage = '';
+
+  const trimmedMessage = message.trim();
+  const messageWords = trimmedMessage.split(' ');
+  const commandName = messageWords[0].toLowerCase();
+
+  const commandElement = commandMap.get(commandName);
+  if (commandElement) {
+    outputMessage = commandElement.command(
+      new CommandArguments(userName, trimmedMessage, messageWords, isModerator)
+    );
+  }
+
+  return outputMessage;
+}
+
 /**
  * Handler for subscription event of connection to Twitch Chat. Used to respond to subscriptions.
  * @param {string} channel The Twitch channel to send any messages to.
@@ -74,15 +93,6 @@ function onSubscriptionHandler(channel: string, username: string) {
     channel,
     `Thank you for the subscription @${username}! Enjoy your stay.`
   );
-}
-
-/**
- * Handler for onConnected event of connection to Twitch Chat. Used to confirm connection.
- * @param {string} addr Address of Twitch IRC channel connected to.
- * @param {number} port Port connected to.
- */
-function onConnectedHandler(addr: string, port: number) {
-  console.log(`* Connected to ${addr}:${port}`);
 }
 
 //#endregion Event Handlers

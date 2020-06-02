@@ -3,13 +3,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const dotenv_1 = require("dotenv");
 dotenv_1.config();
-const chatClient_1 = require("./chatClient");
 const commandMap_1 = require("./commandMap");
 //#endregion Imports
 //#region tmi.js
-chatClient_1.chatClient.on('message', onMessageHandler);
-chatClient_1.chatClient.on('subscription', onSubscriptionHandler);
-chatClient_1.chatClient.on('connected', onConnectedHandler);
+chatClient.on('message', onMessageHandler);
+chatClient.on('subscription', onSubscriptionHandler);
 //#endregion tmi.js
 //#region Chat interaction
 setup();
@@ -30,11 +28,22 @@ function onMessageHandler(channel, userState, msg, self) {
     const commandName = arr[0].toLowerCase();
     const commandElement = commandMap_1.commandMap.get(commandName);
     if (commandElement) {
-        const message = commandElement.command(new commandMap_1.CommandArguments(channel, userState.username, trimmedMsg, arr, chatClient_1.isModerator(userState.badges)));
-        for (const channel of chatClient_1.chatClient.getChannels()) {
-            chatClient_1.chatClient.say(channel, message);
+        const message = commandElement.command(new commandMap_1.CommandArguments(userState.username, trimmedMsg, arr, isModerator(userState.badges)));
+        for (const channel of chatClient.getChannels()) {
+            chatClient.say(channel, message);
         }
     }
+}
+function processMessage(message, userName, isModerator) {
+    let outputMessage = '';
+    const trimmedMessage = message.trim();
+    const messageWords = trimmedMessage.split(' ');
+    const commandName = messageWords[0].toLowerCase();
+    const commandElement = commandMap_1.commandMap.get(commandName);
+    if (commandElement) {
+        outputMessage = commandElement.command(new commandMap_1.CommandArguments(userName, trimmedMessage, messageWords, isModerator));
+    }
+    return outputMessage;
 }
 /**
  * Handler for subscription event of connection to Twitch Chat. Used to respond to subscriptions.
@@ -42,15 +51,7 @@ function onMessageHandler(channel, userState, msg, self) {
  * @param {string} username The username of the subscriber.
  */
 function onSubscriptionHandler(channel, username) {
-    chatClient_1.chatClient.say(channel, `Thank you for the subscription @${username}! Enjoy your stay.`);
-}
-/**
- * Handler for onConnected event of connection to Twitch Chat. Used to confirm connection.
- * @param {string} addr Address of Twitch IRC channel connected to.
- * @param {number} port Port connected to.
- */
-function onConnectedHandler(addr, port) {
-    console.log(`* Connected to ${addr}:${port}`);
+    chatClient.say(channel, `Thank you for the subscription @${username}! Enjoy your stay.`);
 }
 //#endregion Event Handlers
 //#region Helper Functions
@@ -60,14 +61,14 @@ function onConnectedHandler(addr, port) {
 async function setup() {
     await commandMap_1.setupCommands().catch((err) => handleError(err));
     console.log('All data loaded.');
-    await chatClient_1.chatClient.connect();
-    for (const channel of chatClient_1.chatClient.getChannels()) {
+    await chatClient.connect();
+    for (const channel of chatClient.getChannels()) {
         startIntervals(channel);
     }
 }
 function startIntervals(channel) {
     for (const intervalCommand of commandMap_1.IntervalCommands) {
-        setInterval(() => chatClient_1.chatClient.say(channel, intervalCommand.command()), intervalCommand.interval, channel);
+        setInterval(() => chatClient.say(channel, intervalCommand.command()), intervalCommand.interval, channel);
     }
 }
 /**

@@ -19,7 +19,6 @@ const rulesInterval = Number.parseInt(process.env.RULES_TIMEOUT);
 
 class CommandArguments {
   constructor(
-    public channel: string,
     public userName: string,
     public msg: string,
     public msgArray: string[],

@@ -10,8 +10,7 @@ const request = require("request");
 const cooldown = Number.parseInt(process.env.COMMAND_TIMEOUT);
 const rulesInterval = Number.parseInt(process.env.RULES_TIMEOUT);
 class CommandArguments {
-    constructor(channel, userName, msg, msgArray, isModerator) {
-        this.channel = channel;
+    constructor(userName, msg, msgArray, isModerator) {
         this.userName = userName;
         this.msg = msg;
         this.msgArray = msgArray;
